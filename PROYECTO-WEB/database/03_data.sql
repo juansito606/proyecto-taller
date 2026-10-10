@@ -1,0 +1,1 @@
+-- 03_data.sql: datos iniciales para pruebas (Fase 3)

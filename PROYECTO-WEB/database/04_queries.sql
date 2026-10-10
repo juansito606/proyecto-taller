@@ -1,0 +1,1 @@
+-- 04_queries.sql: consultas SQL del sistema (Fase 3)

@@ -1,0 +1,1 @@
+-- 02_constraints.sql: llaves primarias, foraneas y restricciones (Fase 3)

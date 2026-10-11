@@ -1,8 +1,11 @@
 # main.py - Punto de entrada de la API
 from fastapi import FastAPI
 from database.conexion import obtener_conexion
+from routers import auth
 
 app = FastAPI(title="API Taller de Motos")
+
+app.include_router(auth.router)
 
 
 @app.get("/")
@@ -17,4 +20,4 @@ def prueba_db():
             cursor.execute("SELECT COUNT(*) FROM repuestos")
             total = cursor.fetchone()[0]
     return {"conexion": "ok", "total_repuestos": total}
-    
+

@@ -1,8 +1,4 @@
-# proyecto-taller
-## Usuarios de prueba
-
-| Usuario | Contraseña | Rol           |
-|---------|------------|---------------|
-| admin   | admin123   | Administrador |
-| pedro   | vend123    | Vendedor      |
-| luis    | trab123    | Trabajador    |
+Usuario	Contraseña	Rol
+juan	admin123	Administrador
+sofia	vend123	Vendedor
+andres	trab123	Trabajador

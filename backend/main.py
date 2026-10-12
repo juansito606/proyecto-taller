@@ -4,15 +4,19 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from database.conexion import obtener_conexion
-from routers import auth, categorias, marcas, clientes, motos, repuestos
+from routers import auth, categorias, marcas, clientes, motos, repuestos, trabajos
+
 app = FastAPI(title="API Taller de Motos")
 
+# Módulos de la API
 app.include_router(auth.router)
 app.include_router(categorias.router)
 app.include_router(marcas.router)
 app.include_router(clientes.router)
 app.include_router(motos.router)
 app.include_router(repuestos.router)
+app.include_router(trabajos.router)
+
 # Traduce los errores de Oracle a mensajes claros (no se muestran detalles técnicos)
 ERRORES_ORACLE = {
     1: "Ya existe un registro con ese valor",
@@ -43,5 +47,4 @@ def prueba_db():
             cursor.execute("SELECT COUNT(*) FROM repuestos")
             total = cursor.fetchone()[0]
     return {"conexion": "ok", "total_repuestos": total}
-
 

@@ -1,8 +1,10 @@
 // trabajos.js - Trabajos del taller: cambia según el rol
+// Regla: la mano de obra cuenta como ingreso cuando el trabajo pasa a TERMINADO
 const usuario = iniciarPagina();
 const esAdmin = usuario.rol === "ADMINISTRADOR";
 const esTrabajador = usuario.rol === "TRABAJADOR";
-const puedeEditar = esAdmin || esTrabajador;   // el vendedor solo mira
+const puedeEditar = esAdmin || esTrabajador;          // el vendedor solo mira
+const puedeCobrar = usuario.rol !== "TRABAJADOR";     // admin y vendedor cobran repuestos
 
 const tabla = document.getElementById("tabla");
 const form = document.getElementById("formTrabajo");
@@ -55,13 +57,32 @@ async function cargar() {
 
 function dibujarTabla() {
   campo("contador").textContent = trabajos.length;
+
+  // Totales según los filtros puestos
+  const terminados = trabajos.filter(t => t.estado === "TERMINADO");
+  const cobrado = terminados.reduce((s, t) => s + t.costo, 0);
+  const porCobrar = trabajos.filter(t => t.estado !== "TERMINADO").reduce((s, t) => s + t.costo, 0);
+  campo("resumen").innerHTML = `
+    <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
+      <div class="small text-secondary">Mano de obra cobrada (terminados)</div>
+      <div class="fs-5 fw-bold text-success">${pesos(cobrado)}</div>
+    </div></div></div>
+    <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
+      <div class="small text-secondary">Por cobrar (sin terminar)</div>
+      <div class="fs-5 fw-bold text-warning">${pesos(porCobrar)}</div>
+    </div></div></div>
+    <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
+      <div class="small text-secondary">Avance</div>
+      <div class="fs-5 fw-bold">${terminados.length} terminados de ${trabajos.length}</div>
+    </div></div></div>`;
+
   if (!trabajos.length) {
     tabla.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No hay trabajos con esos filtros.</td></tr>';
     return;
   }
   tabla.innerHTML = trabajos.map(t => `
     <tr>
-      <td class="small text-nowrap">${fecha(t.fecha)}</td>
+      <td class="small text-nowrap">${fecha(t.fecha)}${t.fecha_terminado ? `<br><span class="text-success">✔ ${fecha(t.fecha_terminado)}</span>` : ""}</td>
       <td class="text-nowrap"><strong>${esc(t.placa)}</strong>${t.apodo ? `<br><span class="small text-taller">${esc(t.apodo)}</span>` : ""}</td>
       <td>${esc(t.cliente)}</td>
       <td class="small">${esc(t.descripcion)}</td>
@@ -70,6 +91,7 @@ function dibujarTabla() {
       <td><span class="badge ${COLOR_ESTADO[t.estado]}">${t.estado}</span></td>
       <td class="text-end text-nowrap">
         ${puedeEditar && SIGUIENTE[t.estado] ? `<button class="btn btn-sm btn-outline-success" data-avanzar="${t.id_trabajo}" title="Pasar a ${SIGUIENTE[t.estado]}"><i class="bi bi-arrow-right-circle"></i></button>` : ""}
+        ${puedeCobrar ? `<a class="btn btn-sm btn-outline-primary" href="movimientos.html?trabajo=${t.id_trabajo}" title="Cobrar repuestos usados"><i class="bi bi-cart-plus"></i></a>` : ""}
         ${puedeEditar ? `<button class="btn btn-sm btn-outline-secondary" data-editar="${t.id_trabajo}" title="Editar"><i class="bi bi-pencil"></i></button>` : ""}
         ${esAdmin ? `<button class="btn btn-sm btn-outline-danger" data-eliminar="${t.id_trabajo}" title="Eliminar"><i class="bi bi-trash"></i></button>` : ""}
       </td>
@@ -90,7 +112,7 @@ function abrirFormulario(trabajo = null) {
     ["id_moto", "descripcion", "costo", "estado"].forEach(c => campo(c).value = trabajo[c]);
     if (esAdmin) campo("id_usuario").value = trabajo.id_usuario;
   } else {
-    campo("costo").value = 0;
+    campo("costo").value = "";
   }
   modal.show();
 }
@@ -138,7 +160,9 @@ tabla.addEventListener("click", async (evento) => {
       const nuevo = SIGUIENTE[trabajo.estado];
       await guardar(id, { id_moto: trabajo.id_moto, id_usuario: trabajo.id_usuario, descripcion: trabajo.descripcion,
                           costo: trabajo.costo, estado: nuevo });
-      mostrarMensaje("exito", `Trabajo de ${trabajo.placa} → ${nuevo}`);
+      mostrarMensaje("exito", nuevo === "TERMINADO"
+        ? `¡${trabajo.placa} terminado! Se sumaron ${pesos(trabajo.costo)} de mano de obra`
+        : `Trabajo de ${trabajo.placa} → ${nuevo}`);
       cargar();
     }
     if (boton.dataset.editar) abrirFormulario(trabajo);
@@ -154,6 +178,5 @@ tabla.addEventListener("click", async (evento) => {
 });
 
 cargarListas().then(cargar).catch(error => mostrarMensaje("error", error.message));
-
 
 

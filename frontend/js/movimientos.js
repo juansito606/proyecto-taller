@@ -9,19 +9,17 @@ const campo = id => document.getElementById(id);
 
 let movimientos = [];
 let repuestos = [];
+let clientes = [];
+let listaTrabajos = [];
 let tipoActual = "VENTA";
 
 // ---------- Listas para los select ----------
 async function cargarListas() {
-  const [listaRepuestos, clientes, trabajos] = await Promise.all([
-    api("/repuestos"), api("/clientes"), api("/trabajos"),
-  ]);
-  repuestos = listaRepuestos;
+  [repuestos, clientes, listaTrabajos] = await Promise.all([api("/repuestos"), api("/clientes"), api("/trabajos")]);
   llenarSelect(campo("filtroRepuesto"), repuestos, "id_repuesto", "nombre", "Todos los repuestos");
   llenarSelect(campo("id_cliente"), clientes, "id_cliente", "nombre", "Venta de mostrador (sin cliente)");
-  campo("id_trabajo").innerHTML = '<option value="">No</option>' + trabajos
-    .filter(t => t.estado !== "TERMINADO")
-    .map(t => `<option value="${t.id_trabajo}">${esc(t.placa)}${t.apodo ? " (" + esc(t.apodo) + ")" : ""} — ${esc(t.descripcion)}</option>`)
+  campo("id_trabajo").innerHTML = '<option value="">No</option>' + listaTrabajos
+    .map(t => `<option value="${t.id_trabajo}">${esc(t.placa)}${t.apodo ? " (" + esc(t.apodo) + ")" : ""} — ${esc(t.descripcion)} [${t.estado}]</option>`)
     .join("");
 }
 
@@ -29,6 +27,13 @@ function llenarRepuestosFormulario() {
   campo("id_repuesto").innerHTML = '<option value="">Elija...</option>' + repuestos.map(r =>
     `<option value="${r.id_repuesto}">${esc(r.nombre)} — stock: ${r.stock}</option>`).join("");
 }
+
+// Al escoger un trabajo, se pone solo el cliente dueño de la moto
+campo("id_trabajo").addEventListener("change", () => {
+  const trabajo = listaTrabajos.find(t => t.id_trabajo == campo("id_trabajo").value);
+  const cliente = trabajo && clientes.find(c => c.nombre === trabajo.cliente);
+  if (cliente) campo("id_cliente").value = cliente.id_cliente;
+});
 
 // ---------- Listar con filtros ----------
 async function cargar() {
@@ -173,6 +178,16 @@ tabla.addEventListener("click", async (evento) => {
   }
 });
 
-cargarListas().then(cargar).catch(error => mostrarMensaje("error", error.message));
+// ---------- Arrancar ----------
+cargarListas().then(() => {
+  cargar();
+  // Si viene desde Trabajos ("Cobrar repuestos"), abrir la venta con el trabajo ya elegido
+  const idTrabajo = new URLSearchParams(location.search).get("trabajo");
+  if (idTrabajo) {
+    abrirFormulario("VENTA");
+    campo("id_trabajo").value = idTrabajo;
+    campo("id_trabajo").dispatchEvent(new Event("change"));
+  }
+}).catch(error => mostrarMensaje("error", error.message));
 
 

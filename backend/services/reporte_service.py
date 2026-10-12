@@ -1,4 +1,5 @@
 # services/reporte_service.py - Consultas del dashboard y de los reportes
+# Regla: la mano de obra cuenta como ingreso cuando el trabajo está TERMINADO (por fecha_terminado)
 from database.conexion import obtener_conexion, a_diccionarios
 
 
@@ -22,6 +23,12 @@ def dashboard():
                             THEN cantidad * precio_unitario END), 0) AS ventas_mes
         FROM movimientos WHERE tipo = 'VENTA'""")[0]
 
+    mano_obra = _consulta("""
+        SELECT NVL(SUM(CASE WHEN TRUNC(fecha_terminado) = TRUNC(SYSDATE) THEN costo END), 0) AS mano_obra_hoy,
+               NVL(SUM(CASE WHEN TRUNC(fecha_terminado, 'MM') = TRUNC(SYSDATE, 'MM') THEN costo END), 0) AS mano_obra_mes,
+               NVL(SUM(CASE WHEN estado <> 'TERMINADO' THEN costo END), 0) AS mano_obra_por_cobrar
+        FROM trabajos""")[0]
+
     trabajos = {f["estado"]: f["cantidad"] for f in _consulta(
         "SELECT estado, COUNT(*) AS cantidad FROM trabajos GROUP BY estado")}
 
@@ -43,7 +50,9 @@ def dashboard():
         WHERE ROWNUM <= 5""")
 
     return {
-        **inventario, **ventas, **clientes,
+        **inventario, **ventas, **mano_obra, **clientes,
+        "ingresos_hoy": ventas["ventas_hoy"] + mano_obra["mano_obra_hoy"],
+        "ingresos_mes": ventas["ventas_mes"] + mano_obra["mano_obra_mes"],
         "trabajos_pendientes": trabajos.get("PENDIENTE", 0),
         "trabajos_en_proceso": trabajos.get("EN PROCESO", 0),
         "trabajos_terminados": trabajos.get("TERMINADO", 0),
@@ -75,26 +84,33 @@ def trabajos_por_trabajador():
     return _consulta("""
         SELECT u.nombre AS trabajador, COUNT(t.id_trabajo) AS trabajos,
                SUM(CASE WHEN t.estado = 'TERMINADO' THEN 1 ELSE 0 END) AS terminados,
-               NVL(SUM(t.costo), 0) AS total_cobrado
+               NVL(SUM(CASE WHEN t.estado = 'TERMINADO' THEN t.costo END), 0) AS total_cobrado,
+               NVL(SUM(CASE WHEN t.estado <> 'TERMINADO' THEN t.costo END), 0) AS por_cobrar
         FROM trabajos t JOIN usuarios u ON u.id_usuario = t.id_usuario
-        GROUP BY u.nombre ORDER BY trabajos DESC""")
+        GROUP BY u.nombre ORDER BY total_cobrado DESC""")
 
 
 def flujo_caja(desde=None, hasta=None):
-    filtro, params = "", {}
+    params = {}
+    filtro_mov, filtro_trab = "", ""
     if desde:
-        filtro += " AND TRUNC(fecha) >= :desde"
+        filtro_mov += " AND TRUNC(fecha) >= :desde"
+        filtro_trab += " AND TRUNC(fecha_terminado) >= :desde"
         params["desde"] = desde
     if hasta:
-        filtro += " AND TRUNC(fecha) <= :hasta"
+        filtro_mov += " AND TRUNC(fecha) <= :hasta"
+        filtro_trab += " AND TRUNC(fecha_terminado) <= :hasta"
         params["hasta"] = hasta
     fila = _consulta(f"""
         SELECT
           (SELECT NVL(SUM(cantidad * precio_unitario), 0) FROM movimientos
-            WHERE tipo = 'VENTA' {filtro})  AS ingresos_ventas,
-          (SELECT NVL(SUM(costo), 0) FROM trabajos WHERE 1 = 1 {filtro}) AS ingresos_trabajos,
+            WHERE tipo = 'VENTA' {filtro_mov}) AS ingresos_ventas,
+          (SELECT NVL(SUM(costo), 0) FROM trabajos
+            WHERE estado = 'TERMINADO' {filtro_trab}) AS ingresos_trabajos,
           (SELECT NVL(SUM(cantidad * precio_unitario), 0) FROM movimientos
-            WHERE tipo = 'COMPRA' {filtro}) AS egresos_compras
+            WHERE tipo = 'COMPRA' {filtro_mov}) AS egresos_compras
         FROM dual""", params)[0]
     fila["balance"] = fila["ingresos_ventas"] + fila["ingresos_trabajos"] - fila["egresos_compras"]
     return fila
+
+

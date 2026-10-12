@@ -3,7 +3,8 @@ from database.conexion import obtener_conexion, a_diccionarios
 
 SELECT_TRABAJOS = """
     SELECT t.id_trabajo, t.id_moto, m.placa, m.apodo, c.nombre AS cliente,
-           t.id_usuario, u.nombre AS trabajador, t.descripcion, t.fecha, t.costo, t.estado
+           t.id_usuario, u.nombre AS trabajador, t.descripcion, t.fecha, t.costo, t.estado,
+           t.fecha_terminado
     FROM trabajos t
     JOIN motos_cliente m ON m.id_moto    = t.id_moto
     JOIN clientes c      ON c.id_cliente = m.id_cliente
@@ -46,8 +47,9 @@ def crear(datos):
     with obtener_conexion() as con, con.cursor() as cur:
         nuevo_id = cur.var(int)
         cur.execute(
-            """INSERT INTO trabajos (id_moto, id_usuario, descripcion, fecha, costo, estado)
-               VALUES (:id_moto, :id_usuario, :descripcion, NVL(:fecha, SYSDATE), :costo, :estado)
+            """INSERT INTO trabajos (id_moto, id_usuario, descripcion, fecha, costo, estado, fecha_terminado)
+               VALUES (:id_moto, :id_usuario, :descripcion, NVL(:fecha, SYSDATE), :costo, :estado,
+                       CASE WHEN :estado = 'TERMINADO' THEN SYSDATE END)
                RETURNING id_trabajo INTO :nuevo_id""",
             {**datos.model_dump(), "nuevo_id": nuevo_id},
         )
@@ -60,7 +62,9 @@ def actualizar(id_trabajo, datos):
         cur.execute(
             """UPDATE trabajos SET id_moto = :id_moto, id_usuario = :id_usuario,
                       descripcion = :descripcion, fecha = NVL(:fecha, fecha),
-                      costo = :costo, estado = :estado
+                      costo = :costo, estado = :estado,
+                      fecha_terminado = CASE WHEN :estado = 'TERMINADO'
+                                             THEN NVL(fecha_terminado, SYSDATE) END
                WHERE id_trabajo = :id""",
             {**datos.model_dump(), "id": id_trabajo},
         )

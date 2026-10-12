@@ -29,7 +29,7 @@ async function cargarFlujo() {
       </div>`;
     campo("flujo").innerHTML =
       caja("Ventas de repuestos", f.ingresos_ventas, "text-success") +
-      caja("Mano de obra (trabajos)", f.ingresos_trabajos, "text-success") +
+      caja("Mano de obra (terminados)", f.ingresos_trabajos, "text-success") +
       caja("Compras a proveedores", f.egresos_compras, "text-danger") +
       caja("Balance", f.balance, f.balance >= 0 ? "text-success" : "text-danger");
   } catch (error) {
@@ -71,13 +71,15 @@ async function cargarReportes() {
 
     campo("porTrabajador").innerHTML = `
       <div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead><tr><th>Trabajador</th><th class="text-center">Trabajos</th><th class="text-center">Terminados</th><th class="text-end">Mano de obra cobrada</th></tr></thead>
+        <thead><tr><th>Trabajador</th><th class="text-center">Trabajos</th><th class="text-center">Terminados</th>
+                   <th class="text-end">Mano de obra cobrada</th><th class="text-end">Por cobrar</th></tr></thead>
         <tbody>${trabajadores.map(t => `
           <tr>
             <td class="fw-semibold">${esc(t.trabajador)}</td>
             <td class="text-center">${t.trabajos}</td>
             <td class="text-center">${t.terminados}</td>
-            <td class="text-end">${pesos(t.total_cobrado)}</td>
+            <td class="text-end text-success">${pesos(t.total_cobrado)}</td>
+            <td class="text-end text-warning">${pesos(t.por_cobrar)}</td>
           </tr>`).join("")}
         </tbody>
       </table></div>`;

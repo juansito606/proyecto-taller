@@ -27,6 +27,8 @@ class Trabajo(BaseModel):
     fecha: datetime
     costo: float
     estado: Estado
+    estado: Estado
+    fecha_terminado: Optional[datetime] = None
 
 
     

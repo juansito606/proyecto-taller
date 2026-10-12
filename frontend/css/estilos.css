@@ -56,6 +56,19 @@ body { background: #f4f4f6; }
 }
 .tarjeta-kpi.alerta { background: #fff5f5; }
 
+/* ---------- Barras de los reportes ---------- */
+.barra-dato { height: 8px; }
+.barra-dato .progress-bar { background: var(--rojo); }
+
+/* ---------- Al imprimir: sin menú ni botones ---------- */
+@media print {
+  #menu, .no-imprimir { display: none !important; }
+  body { background: #fff; }
+  .card { box-shadow: none !important; border: 1px solid #ddd; }
+}
+
+
+
 
 
 

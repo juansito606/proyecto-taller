@@ -51,6 +51,7 @@ CREATE TABLE motos_cliente (
     marca          VARCHAR2(40)  NOT NULL,
     modelo         VARCHAR2(60)  NOT NULL,
     anio           NUMBER(4),
+    apodo          VARCHAR2(40),
     id_cliente     NUMBER        NOT NULL
 );
 

@@ -4,7 +4,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from database.conexion import obtener_conexion
-from routers import auth, categorias, marcas, clientes, motos, repuestos, trabajos
+from routers import (auth, categorias, marcas, clientes, motos,
+                     repuestos, trabajos, movimientos)
 
 app = FastAPI(title="API Taller de Motos")
 
@@ -16,6 +17,7 @@ app.include_router(clientes.router)
 app.include_router(motos.router)
 app.include_router(repuestos.router)
 app.include_router(trabajos.router)
+app.include_router(movimientos.router)
 
 # Traduce los errores de Oracle a mensajes claros (no se muestran detalles técnicos)
 ERRORES_ORACLE = {
@@ -47,4 +49,5 @@ def prueba_db():
             cursor.execute("SELECT COUNT(*) FROM repuestos")
             total = cursor.fetchone()[0]
     return {"conexion": "ok", "total_repuestos": total}
+
 

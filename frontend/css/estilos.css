@@ -1,0 +1,41 @@
+/* estilos.css - Identidad visual de "El Hospital" (colores de Rodolfa) */
+:root {
+  --rojo: #e10600;
+  --rojo-oscuro: #a80400;
+  --negro: #121212;
+  --gris: #1e1e1e;
+}
+
+body { background: #f4f4f6; }
+
+/* ---------- Login ---------- */
+.login-pagina { min-height: 100vh; }
+
+.login-foto {
+  background: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.75)), url("../assets/rodolfa.jpg") center / cover;
+  color: #fff;
+}
+
+.login-panel { background: var(--negro); color: #fff; }
+
+.logo {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 64px; height: 64px; border-radius: 16px;
+  background: var(--rojo); color: #fff; font-size: 2rem;
+}
+
+.login-panel .form-control {
+  background: var(--gris); border-color: #333; color: #fff;
+}
+.login-panel .form-control:focus {
+  border-color: var(--rojo); box-shadow: 0 0 0 .2rem rgba(225, 6, 0, .25);
+}
+.login-panel .input-group-text { background: var(--gris); border-color: #333; color: #aaa; }
+
+/* ---------- Botones con el rojo del taller ---------- */
+.btn-taller { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.btn-taller:hover, .btn-taller:focus { background: var(--rojo-oscuro); border-color: var(--rojo-oscuro); color: #fff; }
+
+.text-taller { color: var(--rojo); }
+
+

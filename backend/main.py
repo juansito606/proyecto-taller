@@ -1,16 +1,27 @@
 # main.py - Punto de entrada de la API
 import oracledb
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from database.conexion import obtener_conexion
-from routers import (auth, categorias, marcas, clientes, motos,
-                     repuestos, trabajos, movimientos)
+from routers import (auth, categorias, marcas, clientes, motos, repuestos,
+                     trabajos, movimientos, usuarios, reportes)
 
 app = FastAPI(title="API Taller de Motos")
 
+# CORS: permite que la página web (abierta con Live Server en el puerto 5500) use la API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Módulos de la API
 app.include_router(auth.router)
+app.include_router(usuarios.router)
+app.include_router(usuarios.router_roles)
 app.include_router(categorias.router)
 app.include_router(marcas.router)
 app.include_router(clientes.router)
@@ -18,6 +29,8 @@ app.include_router(motos.router)
 app.include_router(repuestos.router)
 app.include_router(trabajos.router)
 app.include_router(movimientos.router)
+app.include_router(reportes.router_dashboard)
+app.include_router(reportes.router)
 
 # Traduce los errores de Oracle a mensajes claros (no se muestran detalles técnicos)
 ERRORES_ORACLE = {

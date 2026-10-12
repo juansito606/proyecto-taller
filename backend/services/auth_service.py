@@ -40,10 +40,20 @@ def iniciar_sesion(usuario: str, contrasena: str):
 
 
 def usuario_actual(credenciales: HTTPAuthorizationCredentials = Depends(seguridad)):
-    """Revisa el token. Se usará para proteger las demás direcciones."""
+    """Revisa el token y que el usuario siga activo en Oracle."""
     if credenciales is None or credenciales.credentials not in SESIONES:
         raise HTTPException(status_code=401, detail="Debe iniciar sesión")
-    return SESIONES[credenciales.credentials]
+    datos = SESIONES[credenciales.credentials]
+
+    # Si el administrador lo desactivó, se le cierra la sesión de inmediato
+    with obtener_conexion() as conexion, conexion.cursor() as cursor:
+        cursor.execute("SELECT activo FROM usuarios WHERE id_usuario = :id",
+                       {"id": datos["id_usuario"]})
+        fila = cursor.fetchone()
+    if fila is None or fila[0] != "S":
+        SESIONES.pop(credenciales.credentials, None)
+        raise HTTPException(status_code=401, detail="Su usuario fue desactivado. Contacte al administrador")
+    return datos
 
 
 def requiere_rol(*roles):

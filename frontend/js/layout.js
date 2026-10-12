@@ -86,6 +86,44 @@ function esc(texto) {
 function cargando() {
   return '<div class="text-center py-5"><div class="spinner-border text-taller"></div></div>';
 }
+// ----- Llena un <select> con una lista que viene de la API -----
+function llenarSelect(select, lista, campoId, campoTexto, textoVacio = null) {
+  select.innerHTML = (textoVacio !== null ? `<option value="">${textoVacio}</option>` : "") +
+    lista.map(x => `<option value="${x[campoId]}">${esc(x[campoTexto])}</option>`).join("");
+}
+
+// ----- Ventana de confirmación bonita (en vez del confirm() del navegador) -----
+function confirmar(mensaje) {
+  return new Promise(resolve => {
+    let modal = document.getElementById("modalConfirmar");
+    if (!modal) {
+      document.body.insertAdjacentHTML("beforeend", `
+        <div class="modal fade" id="modalConfirmar" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+              <div class="modal-body text-center p-4">
+                <i class="bi bi-exclamation-triangle text-taller fs-1"></i>
+                <p class="mensaje mt-2 mb-0"></p>
+              </div>
+              <div class="modal-footer justify-content-center border-0 pt-0">
+                <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-taller btn-si">Sí, continuar</button>
+              </div>
+            </div>
+          </div>
+        </div>`);
+      modal = document.getElementById("modalConfirmar");
+    }
+    modal.querySelector(".mensaje").textContent = mensaje;
+    const ventana = bootstrap.Modal.getOrCreateInstance(modal);
+    let respuesta = false;
+    modal.querySelector(".btn-si").onclick = () => { respuesta = true; ventana.hide(); };
+    modal.addEventListener("hidden.bs.modal", () => resolve(respuesta), { once: true });
+    ventana.show();
+  });
+}
+
+
 
 
 

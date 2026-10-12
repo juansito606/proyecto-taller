@@ -14,3 +14,9 @@ def obtener_conexion():
         dsn=os.getenv("DB_DSN"),
     )
     
+
+def a_diccionarios(cursor):
+    """Convierte las filas de Oracle en diccionarios {columna: valor}."""
+    columnas = [col[0].lower() for col in cursor.description]
+    return [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+

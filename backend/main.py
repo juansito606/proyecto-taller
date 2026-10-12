@@ -1,11 +1,32 @@
-# main.py - Punto de entrada de la API
-from fastapi import FastAPI
+# main.py - Punto de entrada de the API
+import oracledb
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
 from database.conexion import obtener_conexion
-from routers import auth
+from routers import auth, categorias
 
 app = FastAPI(title="API Taller de Motos")
 
 app.include_router(auth.router)
+app.include_router(categorias.router)
+
+# Traduce los errores de Oracle a mensajes claros (no se muestran detalles técnicos)
+ERRORES_ORACLE = {
+    1: "Ya existe un registro con ese valor",
+    1400: "Falta un dato obligatorio",
+    2290: "Algún dato no cumple las reglas permitidas",
+    2291: "El registro relacionado no existe",
+    2292: "No se puede eliminar porque tiene registros asociados",
+}
+
+
+@app.exception_handler(oracledb.DatabaseError)
+def error_oracle(request: Request, exc: oracledb.DatabaseError):
+    codigo = getattr(exc.args[0], "code", None)
+    if codigo in ERRORES_ORACLE:
+        return JSONResponse(status_code=400, content={"detail": ERRORES_ORACLE[codigo]})
+    return JSONResponse(status_code=500, content={"detail": "Error interno del servidor"})
 
 
 @app.get("/")
@@ -20,4 +41,5 @@ def prueba_db():
             cursor.execute("SELECT COUNT(*) FROM repuestos")
             total = cursor.fetchone()[0]
     return {"conexion": "ok", "total_repuestos": total}
+
 

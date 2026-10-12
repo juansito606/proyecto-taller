@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from database.conexion import obtener_conexion
-from routers import auth, categorias, marcas, clientes
+from routers import auth, categorias, marcas, clientes, motos
 
 app = FastAPI(title="API Taller de Motos")
 
@@ -12,6 +12,7 @@ app.include_router(auth.router)
 app.include_router(categorias.router)
 app.include_router(marcas.router)
 app.include_router(clientes.router)
+app.include_router(motos.router)
 
 # Traduce los errores de Oracle a mensajes claros (no se muestran detalles técnicos)
 ERRORES_ORACLE = {

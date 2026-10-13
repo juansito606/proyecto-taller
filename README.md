@@ -146,11 +146,10 @@ docker cp database\. oracle-taller:/tmp/
 docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/01_tables.sql
 docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/02_constraints.sql
 docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/03_data.sql
-docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/05_actualizacion_ventas.sql
 docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/06_actividad.sql
 docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/07_tipos_trabajo.sql
 ```
-(Después de cada script escribe `exit` para salir de sqlplus.)
+(Después de cada script escribe `exit` para salir de sqlplus. El `05_actualizacion_ventas.sql` solo sirve para actualizar bases creadas con la versión anterior; en una instalación nueva no se usa.)
 
 ### Paso 4 — Configurar las credenciales
 Copia `backend/.env.example` como `backend/.env` y escribe la contraseña real:

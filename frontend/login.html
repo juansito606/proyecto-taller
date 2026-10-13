@@ -1,64 +1,88 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Iniciar sesión | El Hospital</title>
+  <title>Ingresar | El Hospital</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link href="css/estilos.css" rel="stylesheet">
+  <link href="css/login.css" rel="stylesheet">
 </head>
-<body>
-  <div class="container-fluid login-pagina">
-    <div class="row min-vh-100">
+<body class="lg-body">
 
-      <!-- Foto de Rodolfa (se oculta en celular) -->
-      <div class="col-lg-7 d-none d-lg-flex login-foto align-items-end p-5">
-        <div>
-          <h2 class="fw-bold">Aquí cuidamos tu moto como si fuera de la familia.</h2>
-            <p class="text-secondary">El Hospital es un taller de motos con más de 20 años de experiencia en el sector. Nuestro equipo de mecánicos altamente capacitados se dedica a brindar un servicio excepcional y soluciones confiables para mantener tu moto en óptimas condiciones.</p>
+  <!-- Fondo animado -->
+  <div class="lg-fondo">
+    <span class="lg-mancha m1"></span><span class="lg-mancha m2"></span><span class="lg-mancha m3"></span>
+    <div class="lg-puntos"></div>
+  </div>
+
+  <main class="lg-contenedor">
+
+    <!-- IZQUIERDA: Rodolfa con anillos y etiquetas (solo en computador) -->
+    <section class="lg-escena d-none d-lg-flex" id="escena">
+      <div class="lg-marco">
+        <span class="lg-anillo-grande"></span>
+        <span class="lg-orbita"></span>
+        <div class="lg-foto" id="foto">
+          <img src="assets/rodolfa.jpg" alt="Moto del taller">
+          <div class="lg-foto-brillo"></div>
         </div>
+        <span class="lg-chip c1"><i class="bi bi-disc"></i> Frenos</span>
+        <span class="lg-chip c2"><i class="bi bi-gear-fill"></i> Motor</span>
+        <span class="lg-chip c3"><i class="bi bi-droplet-fill"></i> Aceite</span>
+        <span class="lg-chip c4"><i class="bi bi-lightning-charge-fill"></i> Eléctrico</span>
       </div>
+      <div class="lg-frase">
+        <h2>Aquí cuidamos tu moto<br>como si fuera <span class="lg-escribe" id="escribe">de la familia</span><span class="lg-cursor">|</span></h2>
+      </div>
+    </section>
 
-      <!-- Formulario -->
-      <div class="col-lg-5 login-panel d-flex align-items-center justify-content-center p-4">
-        <div class="w-100" style="max-width: 380px;">
-          <div class="text-center mb-4">
-            <span class="logo mb-3"><i class="bi bi-wrench-adjustable"></i></span>
-            <h1 class="h3 fw-bold mb-0">El Hospital <i class="bi bi-heart-pulse text-taller"></i></h1>
-            <p class="text-secondary">Taller de motos</p>
+    <!-- DERECHA: formulario -->
+    <section class="lg-panel">
+      <div class="lg-tarjeta" id="tarjeta">
+        <div class="lg-logo">
+          <span class="lg-anillo"></span>
+          <span class="lg-anillo a2"></span>
+          <i class="bi bi-wrench-adjustable"></i>
+        </div>
+        <h1>El Hospital <i class="bi bi-heart-pulse-fill"></i></h1>
+        <p class="lg-sub">Taller de motos</p>
+        <svg class="lg-pulso" viewBox="0 0 300 40" aria-hidden="true">
+          <path d="M0 20 H110 L120 6 L132 34 L144 2 L156 30 L164 20 H300"/>
+        </svg>
+
+        <form id="formLogin" novalidate>
+          <div class="lg-campo">
+            <i class="bi bi-person"></i>
+            <input type="text" id="usuario" placeholder=" " required minlength="3" autocomplete="username">
+            <label for="usuario">Usuario</label>
+            <div class="invalid-feedback">Escriba su usuario (mínimo 3 letras).</div>
           </div>
 
-          <form id="formLogin" novalidate>
-            <div class="mb-3">
-              <label for="usuario" class="form-label">Usuario</label>
-              <div class="input-group has-validation">
-                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                <input type="text" class="form-control" id="usuario" required minlength="3" maxlength="30" autocomplete="username">
-                <div class="invalid-feedback">Escriba su usuario (mínimo 3 caracteres).</div>
-              </div>
-            </div>
+          <div class="lg-campo">
+            <i class="bi bi-lock"></i>
+            <input type="password" id="contrasena" placeholder=" " required minlength="4" autocomplete="current-password">
+            <label for="contrasena">Contraseña</label>
+            <button type="button" class="lg-ojo" id="verContrasena" title="Mostrar contraseña"><i class="bi bi-eye"></i></button>
+            <div class="invalid-feedback">Escriba su contraseña.</div>
+          </div>
 
-            <div class="mb-4">
-              <label for="contrasena" class="form-label">Contraseña</label>
-              <div class="input-group has-validation">
-                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                <input type="password" class="form-control" id="contrasena" required minlength="4" autocomplete="current-password">
-                <button class="btn btn-outline-secondary" type="button" id="verContrasena" title="Mostrar contraseña">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <div class="invalid-feedback">Escriba su contraseña (mínimo 4 caracteres).</div>
-              </div>
-            </div>
+          <div class="lg-mayus d-none" id="avisoMayus"><i class="bi bi-capslock-fill"></i> Tienes las MAYÚSCULAS activadas</div>
 
-            <button type="submit" class="btn btn-taller w-100 py-2" id="btnIngresar">
-              <i class="bi bi-box-arrow-in-right me-1"></i> Ingresar
-            </button>
-          </form>
-        </div>
+          <button type="submit" class="lg-boton" id="btnIngresar"><i class="bi bi-box-arrow-in-right me-1"></i> Ingresar</button>
+        </form>
+
+        <p class="lg-pie">Sistema de gestión del taller · Proyecto Integrador</p>
       </div>
+    </section>
+  </main>
 
-    </div>
+  <!-- Animación cuando el login sale bien -->
+  <div class="lg-bienvenida" id="bienvenida">
+    <div class="lg-llave"><i class="bi bi-wrench-adjustable"></i></div>
+    <p id="textoBienvenida">¡Bienvenido!</p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -66,3 +90,5 @@
   <script src="js/login.js"></script>
 </body>
 </html>
+
+

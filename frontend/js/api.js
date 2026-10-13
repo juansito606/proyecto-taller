@@ -50,6 +50,8 @@ async function api(ruta, opciones = {}) {
 
   const datos = await respuesta.json().catch(() => null);
   if (!respuesta.ok) throw new Error(mensajeDeError(datos));
+    // Avisa a las otras pestañas que algo cambió, para que se actualicen solas
+  if ((opciones.method || "GET") !== "GET" && !ruta.startsWith("/auth/")) localStorage.setItem("datosCambiaron", Date.now());
   return datos;
 }
 

@@ -68,3 +68,12 @@ ALTER TABLE movimientos ADD CONSTRAINT fk_mov_trabajo
 ALTER TABLE movimientos ADD CONSTRAINT ck_mov_tipo CHECK (tipo IN ('VENTA', 'COMPRA'));
 ALTER TABLE movimientos ADD CONSTRAINT ck_mov_cantidad CHECK (cantidad > 0);
 ALTER TABLE movimientos ADD CONSTRAINT ck_mov_precio CHECK (precio_unitario > 0);
+
+-- 10. VENTAS
+ALTER TABLE ventas ADD CONSTRAINT pk_ventas PRIMARY KEY (id_venta);
+ALTER TABLE ventas ADD CONSTRAINT uq_ventas_trabajo UNIQUE (id_trabajo);
+ALTER TABLE ventas ADD CONSTRAINT fk_ventas_cliente FOREIGN KEY (id_cliente) REFERENCES clientes (id_cliente);
+ALTER TABLE ventas ADD CONSTRAINT fk_ventas_moto FOREIGN KEY (id_moto) REFERENCES motos_cliente (id_moto);
+ALTER TABLE ventas ADD CONSTRAINT fk_ventas_trabajo FOREIGN KEY (id_trabajo) REFERENCES trabajos (id_trabajo);
+ALTER TABLE ventas ADD CONSTRAINT fk_ventas_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario);
+ALTER TABLE movimientos ADD CONSTRAINT fk_mov_venta FOREIGN KEY (id_venta) REFERENCES ventas (id_venta);

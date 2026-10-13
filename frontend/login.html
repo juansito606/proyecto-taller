@@ -6,83 +6,74 @@
   <title>Ingresar | El Hospital</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800;900&display=swap" rel="stylesheet">
   <link href="css/estilos.css" rel="stylesheet">
   <link href="css/login.css" rel="stylesheet">
 </head>
 <body class="lg-body">
 
-  <!-- Fondo animado -->
-  <div class="lg-fondo">
-    <span class="lg-mancha m1"></span><span class="lg-mancha m2"></span><span class="lg-mancha m3"></span>
-    <div class="lg-puntos"></div>
+  <!-- FONDO: las 3 fotos de Rodolfa, una al lado de la otra -->
+  <div class="lg-fotos" id="fotos">
+    <div class="lg-col c1"><span class="lg-col-texto"><b>01</b> Rodolfa</span></div>
+    <div class="lg-col c2"><span class="lg-col-texto"><b>02</b> Rodolfa</span></div>
+    <div class="lg-col c3"><span class="lg-col-texto"><b>03</b> Rodolfa</span></div>
   </div>
+  <div class="lg-velo"></div>
 
-  <main class="lg-contenedor">
+  <!-- CENTRO: la tarjeta del login -->
+  <main class="lg-centro">
+    <div class="lg-tarjeta" id="tarjeta">
+      <span class="lg-chip c1"><i class="bi bi-disc"></i> Frenos</span>
+      <span class="lg-chip c2"><i class="bi bi-gear-fill"></i> Motor</span>
+      <span class="lg-chip c3"><i class="bi bi-droplet-fill"></i> Aceite</span>
+      <span class="lg-chip c4"><i class="bi bi-lightning-charge-fill"></i> Eléctrico</span>
 
-    <!-- IZQUIERDA: Rodolfa con anillos y etiquetas (solo en computador) -->
-    <section class="lg-escena d-none d-lg-flex" id="escena">
-      <div class="lg-marco">
-        <span class="lg-anillo-grande"></span>
-        <span class="lg-orbita"></span>
-        <div class="lg-foto" id="foto">
-          <img src="assets/rodolfa.jpg" alt="Moto del taller">
-          <div class="lg-foto-brillo"></div>
+      <div class="lg-logo">
+        <span class="lg-anillo"></span>
+        <span class="lg-anillo a2"></span>
+        <i class="bi bi-wrench-adjustable"></i>
+      </div>
+      <h1>El Hospital <i class="bi bi-heart-pulse-fill"></i></h1>
+      <p class="lg-sub">Taller de motos</p>
+      <svg class="lg-pulso" viewBox="0 0 300 40" aria-hidden="true">
+        <path d="M0 20 H110 L120 6 L132 34 L144 2 L156 30 L164 20 H300"/>
+      </svg>
+      <p class="lg-frase">Aquí cuidamos tu moto como si fuera <span id="escribe">de la familia</span><span class="lg-cursor">|</span></p>
+
+      <form id="formLogin" novalidate>
+        <div class="lg-campo">
+          <i class="bi bi-person"></i>
+          <input type="text" id="usuario" placeholder=" " required minlength="3" autocomplete="username">
+          <label for="usuario">Usuario</label>
+          <div class="invalid-feedback">Escriba su usuario (mínimo 3 letras).</div>
         </div>
-        <span class="lg-chip c1"><i class="bi bi-disc"></i> Frenos</span>
-        <span class="lg-chip c2"><i class="bi bi-gear-fill"></i> Motor</span>
-        <span class="lg-chip c3"><i class="bi bi-droplet-fill"></i> Aceite</span>
-        <span class="lg-chip c4"><i class="bi bi-lightning-charge-fill"></i> Eléctrico</span>
-      </div>
-      <div class="lg-frase">
-        <h2>Aquí cuidamos tu moto<br>como si fuera <span class="lg-escribe" id="escribe">de la familia</span><span class="lg-cursor">|</span></h2>
-      </div>
-    </section>
 
-    <!-- DERECHA: formulario -->
-    <section class="lg-panel">
-      <div class="lg-tarjeta" id="tarjeta">
-        <div class="lg-logo">
-          <span class="lg-anillo"></span>
-          <span class="lg-anillo a2"></span>
-          <i class="bi bi-wrench-adjustable"></i>
+        <div class="lg-campo">
+          <i class="bi bi-lock"></i>
+          <input type="password" id="contrasena" placeholder=" " required minlength="4" autocomplete="current-password">
+          <label for="contrasena">Contraseña</label>
+          <button type="button" class="lg-ojo" id="verContrasena" title="Mostrar contraseña"><i class="bi bi-eye"></i></button>
+          <div class="invalid-feedback">Escriba su contraseña.</div>
         </div>
-        <h1>El Hospital <i class="bi bi-heart-pulse-fill"></i></h1>
-        <p class="lg-sub">Taller de motos</p>
-        <svg class="lg-pulso" viewBox="0 0 300 40" aria-hidden="true">
-          <path d="M0 20 H110 L120 6 L132 34 L144 2 L156 30 L164 20 H300"/>
-        </svg>
 
-        <form id="formLogin" novalidate>
-          <div class="lg-campo">
-            <i class="bi bi-person"></i>
-            <input type="text" id="usuario" placeholder=" " required minlength="3" autocomplete="username">
-            <label for="usuario">Usuario</label>
-            <div class="invalid-feedback">Escriba su usuario (mínimo 3 letras).</div>
-          </div>
+        <div class="lg-mayus d-none" id="avisoMayus"><i class="bi bi-capslock-fill"></i> Tienes las MAYÚSCULAS activadas</div>
 
-          <div class="lg-campo">
-            <i class="bi bi-lock"></i>
-            <input type="password" id="contrasena" placeholder=" " required minlength="4" autocomplete="current-password">
-            <label for="contrasena">Contraseña</label>
-            <button type="button" class="lg-ojo" id="verContrasena" title="Mostrar contraseña"><i class="bi bi-eye"></i></button>
-            <div class="invalid-feedback">Escriba su contraseña.</div>
-          </div>
+        <button type="submit" class="lg-boton" id="btnIngresar"><i class="bi bi-box-arrow-in-right me-1"></i> Ingresar</button>
+      </form>
 
-          <div class="lg-mayus d-none" id="avisoMayus"><i class="bi bi-capslock-fill"></i> Tienes las MAYÚSCULAS activadas</div>
-
-          <button type="submit" class="lg-boton" id="btnIngresar"><i class="bi bi-box-arrow-in-right me-1"></i> Ingresar</button>
-        </form>
-
-        <p class="lg-pie">Sistema de gestión del taller · Proyecto Integrador</p>
-      </div>
-    </section>
+      <p class="lg-pie">Sistema de gestión del taller · Proyecto Integrador</p>
+    </div>
   </main>
 
-  <!-- Animación cuando el login sale bien -->
+  <!-- BIENVENIDA: el pulso se hace gigante y aparece el saludo -->
   <div class="lg-bienvenida" id="bienvenida">
-    <div class="lg-llave"><i class="bi bi-wrench-adjustable"></i></div>
-    <p id="textoBienvenida">¡Bienvenido!</p>
+    <svg class="lg-ecg" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">
+      <path class="trazo" d="M0 100 H260 L285 60 L300 100 H420 L440 100 L465 20 L490 180 L515 40 L535 120 L550 100 H700 L720 100 L745 20 L770 180 L795 40 L815 120 L830 100 H940 L965 60 L980 100 H1200"/>
+      <path class="chispa" d="M0 100 H260 L285 60 L300 100 H420 L440 100 L465 20 L490 180 L515 40 L535 120 L550 100 H700 L720 100 L745 20 L770 180 L795 40 L815 120 L830 100 H940 L965 60 L980 100 H1200"/>
+    </svg>
+    <div class="lg-corazon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <h2 class="lg-hola" id="hola"></h2>
+    <p class="lg-rol" id="rolBienvenida"></p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -90,5 +81,4 @@
   <script src="js/login.js"></script>
 </body>
 </html>
-
 

@@ -82,10 +82,10 @@ function cargarFuente() {
 }
 
 // ---------- FOTOS DEL TALLER ----------
-// Cada página busca en assets/fotos/:  <pagina>.jpg, <pagina>2.jpg, <pagina>3.jpg
+// Cada página busca en assets/fotos/:  <pagina>.jpg, <pagina>2.jpg ... <pagina>10.jpg
 // (el inicio usa assets/rodolfa.jpg). Si una página no tiene fotos, simplemente no muestra vitrina.
 function rutasDeFotos(pagina) {
-  const rutas = ["", "2", "3"].map(n => `assets/fotos/${pagina}${n}.jpg`);
+  const rutas = ["", "2", "3", "4", "5", "6", "7", "8", "9", "10"].map(n => `assets/fotos/${pagina}${n}.jpg`);
   return pagina === "index" ? ["assets/rodolfa.jpg", ...rutas] : rutas;
 }
 
@@ -499,3 +499,268 @@ function alActualizar(funcion, segundos = 30) {
   document.addEventListener("visibilitychange", () => { if (!document.hidden) funcion(); });
   setInterval(() => { if (!document.hidden) funcion(); }, segundos * 1000);
 }
+
+// =====================================================================
+// COSITAS ANIMADAS: anillos, etiquetas flotando y burbujas en el fondo
+// =====================================================================
+
+// Etiquetas que flotan alrededor de las fotos de cada sección: [ícono, texto]
+const COSITAS = {
+  index:       [["heart-pulse-fill", "Taller de motos"], ["tools", "Mano de obra"], ["box-seam", "Repuestos"]],
+  trabajos:    [["hourglass-split", "Pendiente"], ["gear-wide-connected", "En proceso"], ["check2-circle", "Terminado"]],
+  repuestos:   [],   // Repuestos ya trae sus propias etiquetas
+  movimientos: [["receipt", "Una sola venta"], ["person-check", "Asigna mecánico"]],
+  clientes:    [["bicycle", "Sus motos"], ["heart-fill", "Atención personal"]],
+  catalogo:    [["tags-fill", "Categorías"], ["award-fill", "Marcas"]],
+  reportes:    [["graph-up-arrow", "Ventas"], ["cash-stack", "Flujo de caja"], ["person-workspace", "Por mecánico"]],
+  usuarios:    [["shield-lock-fill", "Roles"], ["key-fill", "Acceso seguro"]],
+};
+
+// Se "envuelve" iniciarPagina para agregarle las cositas sin tocar lo de arriba
+const iniciarPaginaBase = iniciarPagina;
+iniciarPagina = function (...argumentos) {
+  const yo = iniciarPaginaBase(...argumentos);
+  burbujasDeFondo();
+  esperarVitrina();
+  return yo;
+};
+
+// Burbujas de rayitas que suben despacio por el fondo
+function burbujasDeFondo() {
+  const fondo = document.getElementById("fondo");
+  if (!fondo) return;
+  for (let i = 0; i < 10; i++) {
+    const burbuja = document.createElement("span");
+    burbuja.className = "burbuja-deco" + (i % 3 === 0 ? " llena" : "");
+    const tamano = 14 + Math.random() * 48;
+    burbuja.style.width = burbuja.style.height = `${tamano}px`;
+    burbuja.style.left = `${Math.random() * 100}%`;
+    burbuja.style.animationDuration = `${16 + Math.random() * 18}s`;
+    burbuja.style.animationDelay = `${-Math.random() * 25}s`;
+    fondo.appendChild(burbuja);
+  }
+}
+
+// Espera a que aparezca la vitrina de fotos para decorarla
+function esperarVitrina() {
+  const marco = document.querySelector(".vitrina");
+  if (!marco) return;
+  const visible = () => !marco.classList.contains("d-none");
+  if (visible()) return decorarVitrina(marco);
+  const observador = new MutationObserver(() => {
+    if (visible()) { observador.disconnect(); decorarVitrina(marco); }
+  });
+  observador.observe(marco, { attributes: true, attributeFilter: ["class"] });
+  // Si la página no tiene fotos, se pone un ícono grande que late
+  setTimeout(() => {
+    if (!visible()) { observador.disconnect(); vitrinaDeIcono(marco); }
+  }, 2500);
+}
+
+function decorarVitrina(marco) {
+  if (marco.dataset.decorada) return;
+  marco.dataset.decorada = "si";
+  if (!marco.classList.contains("vitrina-circulo")) {
+    marco.insertAdjacentHTML("afterbegin", '<span class="anillo-deco"></span><span class="orbita-deco"></span>');
+  }
+  const etiquetas = COSITAS[paginaActual()] || [];
+  marco.insertAdjacentHTML("beforeend", etiquetas.map(([icono, texto], i) =>
+    `<span class="chip-flotante ch${i + 1}"><i class="bi bi-${icono}"></i> ${texto}</span>`).join(""));
+}
+
+function vitrinaDeIcono(marco) {
+  const seccion = seccionDe(paginaActual());
+  marco.classList.remove("d-none");
+  marco.classList.add("vitrina-icono");
+  marco.removeAttribute("title");
+  marco.innerHTML = `<div class="icono-grande"><i class="bi bi-${seccion.icono}"></i></div>`;
+  decorarVitrina(marco);
+}
+
+// =====================================================================
+// FOTOS QUE ROTAN: si una sección tiene más fotos de las que caben,
+// cada 4 segundos una se desvanece y entra la siguiente
+// =====================================================================
+const montarVitrinaBase = montarVitrina;
+montarVitrina = function (caja, marco, fotos, seccion) {
+  montarVitrinaBase(caja, marco, fotos, seccion);
+  rotarFotos(marco, fotos);
+};
+
+function rotarFotos(marco, fotos) {
+  const imagenes = [...marco.querySelectorAll("img")];
+  if (!imagenes.length || fotos.length <= imagenes.length) return;   // si caben todas, no rota
+  let siguiente = imagenes.length;
+  setInterval(() => {
+    if (document.hidden || marco.matches(":hover")) return;          // con el mouse encima se queda quieta
+    const imagen = imagenes[siguiente % imagenes.length];             // se turnan los espacios
+    const indice = siguiente % fotos.length;
+    imagen.classList.add("cambiando");
+    setTimeout(() => {
+      imagen.src = fotos[indice].src;
+      imagen.dataset.indice = indice;                                 // para que el clic abra la foto correcta
+      imagen.classList.remove("cambiando");
+    }, 450);
+    siguiente++;
+  }, 4000);
+}
+
+// =====================================================================
+// CINTA DE PELÍCULA: todas las fotos de la sección, pequeñas y nítidas,
+// deslizándose debajo del título (en el Inicio salen las de todo el taller)
+// =====================================================================
+const montarVitrinaSinCinta = montarVitrina;
+montarVitrina = function (caja, marco, fotos, seccion) {
+  montarVitrinaSinCinta(caja, marco, fotos, seccion);
+  if (paginaActual() === "index") {
+    const paginas = ["trabajos", "repuestos", "movimientos", "clientes", "catalogo", "reportes"];
+    Promise.all(paginas.map(p => buscarFotos(rutasDeFotos(p))
+      .then(lista => lista.map(f => ({ ...f, titulo: seccionDe(p).texto })))))
+      .then(grupos => crearCinta(caja, [...fotos.map(f => ({ ...f, titulo: "El Hospital" })), ...grupos.flat()]));
+  } else {
+    crearCinta(caja, fotos.map(f => ({ ...f, titulo: seccion.texto })));
+  }
+};
+
+function crearCinta(caja, fotos) {
+  if (fotos.length < 3) return;   // con 1 o 2 fotos basta la vitrina
+  const cuadros = fotos.map((foto, i) => `
+    <button type="button" class="cuadro" data-indice="${i}" title="${esc(foto.titulo)}">
+      <img src="${foto.src}" alt="${esc(foto.titulo)}">
+    </button>`).join("");
+  const cinta = document.createElement("div");
+  cinta.className = "cinta";
+  // Las fotos van dos veces seguidas para que la cinta gire sin cortes
+  cinta.innerHTML = `<div class="cinta-pista" style="--duracion:${fotos.length * 5}s">${cuadros}${cuadros}</div>`;
+  caja.insertAdjacentElement("afterend", cinta);
+  cinta.addEventListener("click", evento => {
+    const cuadro = evento.target.closest(".cuadro");
+    if (cuadro) abrirVisor(fotos, Number(cuadro.dataset.indice));
+  });
+}
+
+
+
+// =====================================================================
+// AGREGAR RÁPIDO: botón ➕ al lado de Categoría, Marca y Tipo de trabajo
+// (pegado al final de layout.js; no cambia nada de lo de arriba)
+// =====================================================================
+
+// La vendedora también entra al Catálogo
+MENU.find(m => m.ruta === "pages/catalogo.html").roles.push("VENDEDOR");
+COSITAS.catalogo.push(["wrench-adjustable", "Tipos de trabajo"]);
+
+// Qué se crea desde cada lista. "listas" = todas las listas de la página que deben recibir lo nuevo
+const RAPIDO_CATEGORIA = { ruta: "/categorias", id: "id_categoria", nombre: "categoría",
+                           listas: ["id_categoria", "filtroCategoria", "n_categoria"] };
+const RAPIDO_MARCA     = { ruta: "/marcas", id: "id_marca", nombre: "marca",
+                           listas: ["id_marca", "filtroMarca", "n_marca"] };
+const RAPIDO_TIPO      = { ruta: "/tipos-trabajo", id: "id_tipo", nombre: "tipo de trabajo", conPrecio: true,
+                           listas: ["id_tipo", "filtroTipo", "t_tipo"] };
+const RAPIDOS = {
+  id_categoria: RAPIDO_CATEGORIA, n_categoria: RAPIDO_CATEGORIA,
+  id_marca: RAPIDO_MARCA,         n_marca: RAPIDO_MARCA,
+  id_tipo: RAPIDO_TIPO,           t_tipo: RAPIDO_TIPO,
+};
+
+// Llena una lista de tipos de trabajo guardando su precio sugerido en cada opción
+function llenarTipos(select, tipos, textoVacio) {
+  select.innerHTML = (textoVacio !== undefined ? `<option value="">${esc(textoVacio)}</option>` : "") +
+    tipos.map(t => `<option value="${t.id_tipo}" data-precio="${t.precio_sugerido}">${esc(t.nombre)}</option>`).join("");
+}
+
+function agregarBotonRapido(select, cfg) {
+  // 1. El select queda pegado a un botón ➕
+  const grupo = document.createElement("div");
+  grupo.className = "input-group has-validation";
+  select.before(grupo);
+  grupo.append(select);
+  const boton = document.createElement("button");
+  boton.type = "button";
+  boton.className = "btn btn-outline-warning";
+  boton.title = "Agregar " + cfg.nombre;
+  boton.innerHTML = '<i class="bi bi-plus-lg"></i>';
+  grupo.append(boton);
+  const aviso = grupo.nextElementSibling;   // el texto rojo de "Elija..." se mete al grupo
+  if (aviso && aviso.classList.contains("invalid-feedback")) grupo.append(aviso);
+
+  // 2. Cajita escondida para escribir lo nuevo
+  const caja = document.createElement("div");
+  caja.className = "rapido d-none";
+  caja.innerHTML = `
+    <div class="small fw-semibold mb-2"><i class="bi bi-stars"></i> Agregar ${cfg.nombre}</div>
+    <div class="d-flex flex-wrap gap-2">
+      <input class="form-control form-control-sm rapido-nombre" placeholder="Nombre" maxlength="${cfg.conPrecio ? 60 : 50}" style="flex: 2 1 150px">
+      ${cfg.conPrecio ? '<input type="number" class="form-control form-control-sm rapido-precio" placeholder="Precio sugerido" min="0" step="1000" style="flex: 1 1 120px">' : ""}
+      <button type="button" class="btn btn-sm btn-taller rapido-ok"><i class="bi bi-check-lg"></i> Agregar</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary rapido-no" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+    </div>`;
+  grupo.after(caja);
+  const nombre = caja.querySelector(".rapido-nombre");
+  const precio = caja.querySelector(".rapido-precio");
+
+  function cerrar() {
+    caja.classList.add("d-none");
+    nombre.value = "";
+    nombre.classList.remove("is-invalid");
+    if (precio) precio.value = "";
+  }
+
+  async function guardar() {
+    const texto = nombre.value.trim();
+    if (texto.length < 2) {
+      nombre.classList.add("is-invalid");
+      nombre.focus();
+      return;
+    }
+    const datos = { nombre: texto };
+    if (cfg.conPrecio) datos.precio_sugerido = Number(precio.value) || 0;
+    try {
+      const nuevo = await api(cfg.ruta, { method: "POST", body: JSON.stringify(datos) });
+      // Se agrega a todas las listas de la página y queda escogido
+      cfg.listas.forEach(id => {
+        const lista = document.getElementById(id);
+        if (!lista) return;
+        const opcion = new Option(nuevo.nombre, nuevo[cfg.id]);
+        if (cfg.conPrecio) opcion.dataset.precio = nuevo.precio_sugerido;
+        lista.add(opcion);
+      });
+      select.value = nuevo[cfg.id];
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      cerrar();
+      mostrarMensaje("exito", `Listo: "${nuevo.nombre}" ya está en la lista`);
+    } catch (error) {
+      mostrarMensaje("error", error.message);
+    }
+  }
+
+  boton.addEventListener("click", () => {
+    caja.classList.toggle("d-none");
+    if (!caja.classList.contains("d-none")) nombre.focus();
+  });
+  caja.querySelector(".rapido-ok").addEventListener("click", guardar);
+  caja.querySelector(".rapido-no").addEventListener("click", cerrar);
+  caja.addEventListener("keydown", evento => {
+    if (evento.key === "Enter") { evento.preventDefault(); guardar(); }              // Enter no envía el formulario grande
+    if (evento.key === "Escape") { evento.preventDefault(); evento.stopPropagation(); cerrar(); }
+  });
+}
+
+// Estilo de la cajita
+document.head.insertAdjacentHTML("beforeend", `<style>
+  .rapido { margin-top: .5rem; padding: .7rem; border: 1px dashed var(--acento, #eab308);
+            border-radius: .75rem; background: rgba(255, 255, 255, .04); animation: aparecer .3s ease both; }
+  .rapido .bi-stars { color: var(--acento, #eab308); }
+</style>`);
+
+// Al terminar de cargar la página se ponen los ➕ (solo admin y vendedora)
+document.addEventListener("DOMContentLoaded", () => {
+  const yo = leerSesion("usuario");
+  if (!yo || !["ADMINISTRADOR", "VENDEDOR"].includes(yo.rol)) return;
+  Object.entries(RAPIDOS).forEach(([id, cfg]) => {
+    const select = document.getElementById(id);
+    if (select && select.tagName === "SELECT") agregarBotonRapido(select, cfg);
+  });
+});
+
+

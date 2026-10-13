@@ -1,4 +1,4 @@
-// login.js - Inicio de sesión (con animaciones)
+// login.js - Inicio de sesión: fotos de fondo, tarjeta al centro y bienvenida con el pulso gigante
 const formulario = document.getElementById("formLogin");
 const boton = document.getElementById("btnIngresar");
 const tarjeta = document.getElementById("tarjeta");
@@ -6,6 +6,22 @@ const campoContrasena = document.getElementById("contrasena");
 
 // Si ya hay sesión abierta, ir directo al inicio
 if (Sesion.token()) location.href = "index.html";
+
+// ---------- Fotos y etiquetas que se mueven un poquito con el mouse ----------
+const fotos = document.getElementById("fotos");
+document.addEventListener("mousemove", (evento) => {
+  const x = evento.clientX / innerWidth - .5;
+  const y = evento.clientY / innerHeight - .5;
+  fotos.style.transform = `scale(1.04) translate(${x * -16}px, ${y * -12}px)`;
+  tarjeta.querySelectorAll(".lg-chip").forEach((chip, i) => {
+    const fuerza = (i + 1) * 8;
+    chip.style.translate = `${x * fuerza}px ${y * fuerza}px`;
+  });
+  // Borde de la tarjeta que brilla donde está el mouse
+  const caja = tarjeta.getBoundingClientRect();
+  tarjeta.style.setProperty("--mx", `${evento.clientX - caja.left}px`);
+  tarjeta.style.setProperty("--my", `${evento.clientY - caja.top}px`);
+});
 
 // ---------- Mostrar u ocultar la contraseña ----------
 document.getElementById("verContrasena").addEventListener("click", (evento) => {
@@ -27,7 +43,6 @@ let letras = frases[0].length;
 let borrando = true;
 function escribir() {
   const destino = document.getElementById("escribe");
-  if (!destino) return;
   if (borrando) {
     letras--;
     if (letras <= 0) { borrando = false; numeroFrase = (numeroFrase + 1) % frases.length; }
@@ -44,38 +59,23 @@ function escribir() {
 }
 setTimeout(escribir, 2500);
 
-// ---------- Rodolfa en 3D: se inclina siguiendo el mouse ----------
-const escena = document.getElementById("escena");
-const foto = document.getElementById("foto");
-escena.addEventListener("mousemove", (evento) => {
-  const caja = escena.getBoundingClientRect();
-  const x = (evento.clientX - caja.left) / caja.width - .5;
-  const y = (evento.clientY - caja.top) / caja.height - .5;
-  foto.style.transform = `perspective(900px) rotateY(${x * 16}deg) rotateX(${-y * 16}deg)`;
-  foto.style.setProperty("--bx", `${(x + .5) * 100}%`);
-  foto.style.setProperty("--by", `${(y + .5) * 100}%`);
-  escena.querySelectorAll(".lg-chip").forEach((chip, i) => {
-    const fuerza = (i + 1) * 10;
-    chip.style.translate = `${x * fuerza}px ${y * fuerza}px`;
-  });
-});
-escena.addEventListener("mouseleave", () => {
-  foto.style.transform = "";
-  escena.querySelectorAll(".lg-chip").forEach(chip => chip.style.translate = "");
-});
-
-// ---------- Borde de la tarjeta que brilla donde está el mouse ----------
-document.addEventListener("mousemove", (evento) => {
-  const caja = tarjeta.getBoundingClientRect();
-  tarjeta.style.setProperty("--mx", `${evento.clientX - caja.left}px`);
-  tarjeta.style.setProperty("--my", `${evento.clientY - caja.top}px`);
-});
-
 // ---------- La tarjeta tiembla cuando algo sale mal ----------
 function temblar() {
   tarjeta.classList.remove("temblor");
   void tarjeta.offsetWidth;   // reinicia la animación
   tarjeta.classList.add("temblor");
+}
+
+// ---------- Bienvenida: el pulso se hace gigante y aparece "¡Hola, Juan! 👋" letra por letra ----------
+const NOMBRE_ROL = { ADMINISTRADOR: "Administrador", VENDEDOR: "Vendedora", TRABAJADOR: "Mecánico" };
+function bienvenida(usuario) {
+  const nombre = usuario.nombre.split(" ")[0];
+  const texto = `¡Hola, ${nombre}!`;
+  const letrasHtml = [...texto].map((letra, i) =>
+    `<span style="--i:${i}">${letra === " " ? "&nbsp;" : letra}</span>`).join("");
+  document.getElementById("hola").innerHTML = letrasHtml + `<span class="mano" style="--i:${texto.length + 1}">&nbsp;👋</span>`;
+  document.getElementById("rolBienvenida").textContent = `${NOMBRE_ROL[usuario.rol] || usuario.rol} · Bienvenido a El Hospital`;
+  document.getElementById("bienvenida").classList.add("activa");
 }
 
 // ---------- Enviar el formulario ----------
@@ -105,9 +105,8 @@ formulario.addEventListener("submit", async (evento) => {
 
     // 4. Guardar la sesión, mostrar la bienvenida e ir al inicio
     Sesion.guardar(respuesta.token, respuesta.usuario);
-    document.getElementById("textoBienvenida").textContent = `¡Hola, ${respuesta.usuario.nombre.split(" ")[0]}!`;
-    document.getElementById("bienvenida").classList.add("activa");
-    setTimeout(() => location.href = "index.html", 1400);
+    bienvenida(respuesta.usuario);
+    setTimeout(() => location.href = "index.html", 3200);
   } catch (error) {
     mostrarMensaje("error", error.message);
     temblar();
@@ -115,5 +114,6 @@ formulario.addEventListener("submit", async (evento) => {
     boton.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Ingresar';
   }
 });
+
 
 

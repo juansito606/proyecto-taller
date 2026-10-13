@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from database.conexion import obtener_conexion
-from routers import (auth, categorias, marcas, clientes, motos, repuestos,
+from routers import (auth, categorias, marcas, clientes, motos, repuestos, tipos_trabajo,
                      trabajos, movimientos, ventas, usuarios, reportes, actividad)
 
 app = FastAPI(title="API Taller de Motos")
@@ -25,6 +25,7 @@ app.include_router(marcas.router)
 app.include_router(clientes.router)
 app.include_router(motos.router)
 app.include_router(repuestos.router)
+app.include_router(tipos_trabajo.router)
 app.include_router(trabajos.router)
 app.include_router(ventas.router)
 app.include_router(movimientos.router)
@@ -61,5 +62,4 @@ def prueba_db():
             cursor.execute("SELECT COUNT(*) FROM repuestos")
             total = cursor.fetchone()[0]
     return {"conexion": "ok", "total_repuestos": total}
-
 

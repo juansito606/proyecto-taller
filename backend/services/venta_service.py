@@ -8,12 +8,13 @@ SELECT_VENTAS = """
            v.id_cliente, c.nombre AS cliente,
            v.id_moto, mc.placa, mc.apodo, mc.marca AS marca_moto, mc.modelo AS modelo_moto,
            v.id_trabajo, t.descripcion AS trabajo, t.costo AS mano_obra, t.estado AS estado_trabajo,
-           mec.nombre AS mecanico
+           tt.nombre AS tipo_trabajo, mec.nombre AS mecanico
     FROM ventas v
     JOIN usuarios u             ON u.id_usuario   = v.id_usuario
     LEFT JOIN clientes c        ON c.id_cliente   = v.id_cliente
     LEFT JOIN motos_cliente mc  ON mc.id_moto     = v.id_moto
     LEFT JOIN trabajos t        ON t.id_trabajo   = v.id_trabajo
+    LEFT JOIN tipos_trabajo tt  ON tt.id_tipo     = t.id_tipo
     LEFT JOIN usuarios mec      ON mec.id_usuario = t.id_usuario
 """
 
@@ -71,7 +72,7 @@ def crear(datos, id_usuario):
     if datos.trabajo and not datos.id_moto:
         raise HTTPException(status_code=400, detail="Para registrar mano de obra debe elegir la moto")
 
-    # Todo pasa en UNA transacción: si algo falla, no se guarda nada (la conexión se cierra sin commit)
+    # Todo pasa en UNA transacción: si algo falla, no se guarda nada
     with obtener_conexion() as con, con.cursor() as cur:
         id_cliente = datos.id_cliente
         if datos.id_moto:
@@ -91,8 +92,8 @@ def crear(datos, id_usuario):
                 raise HTTPException(status_code=400, detail="El mecánico elegido no es un trabajador activo")
             nuevo = cur.var(int)
             cur.execute(
-                """INSERT INTO trabajos (id_moto, id_usuario, descripcion, costo, estado, fecha_terminado)
-                   VALUES (:id_moto, :id_usuario, :descripcion, :costo, :estado,
+                """INSERT INTO trabajos (id_moto, id_usuario, id_tipo, descripcion, costo, estado, fecha_terminado)
+                   VALUES (:id_moto, :id_usuario, :id_tipo, :descripcion, :costo, :estado,
                            CASE WHEN :estado = 'TERMINADO' THEN SYSDATE END)
                    RETURNING id_trabajo INTO :nuevo""",
                 {"id_moto": datos.id_moto, **datos.trabajo.model_dump(), "nuevo": nuevo})

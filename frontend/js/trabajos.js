@@ -11,6 +11,8 @@ const campo = id => document.getElementById(id);
 
 let trabajos = [];
 let editandoId = null;
+let costoPuesto = null;         // lo que el tipo de trabajo escribió solo (para poder cambiarlo si cambian el tipo)
+let descripcionPuesta = null;
 
 const COLOR_ESTADO = { "PENDIENTE": "text-bg-warning", "EN PROCESO": "text-bg-info", "TERMINADO": "text-bg-success" };
 const SIGUIENTE = { "PENDIENTE": "EN PROCESO", "EN PROCESO": "TERMINADO" };
@@ -19,9 +21,11 @@ campo("btnNuevo").classList.remove("d-none");
 if (esTrabajador) campo("subtitulo").innerHTML = 'Tus trabajos asignados · <span id="contador">0</span>';
 
 async function cargarListas() {
-  const motos = await api("/motos");
+  const [motos, tipos] = await Promise.all([api("/motos"), api("/tipos-trabajo")]);
   campo("id_moto").innerHTML = '<option value="">Elija...</option>' + motos.map(m =>
     `<option value="${m.id_moto}">${esc(m.placa)} · ${esc(m.marca)} ${esc(m.modelo)}${m.apodo ? " (" + esc(m.apodo) + ")" : ""} — ${esc(m.cliente)}</option>`).join("");
+  llenarTipos(campo("id_tipo"), tipos, "Sin tipo / otro");
+  llenarTipos(campo("filtroTipo"), tipos, "Todos los tipos");
 
   if (puedeAsignar) {
     const mecanicos = await api("/usuarios/mecanicos");
@@ -37,6 +41,7 @@ async function cargar() {
   const filtros = new URLSearchParams();
   if (campo("buscar").value.trim()) filtros.set("buscar", campo("buscar").value.trim());
   if (campo("filtroEstado").value) filtros.set("estado", campo("filtroEstado").value);
+  if (campo("filtroTipo").value) filtros.set("id_tipo", campo("filtroTipo").value);
   if (puedeAsignar && campo("filtroTrabajador").value) filtros.set("id_usuario", campo("filtroTrabajador").value);
   if (campo("desde").value) filtros.set("desde", campo("desde").value);
   if (campo("hasta").value) filtros.set("hasta", campo("hasta").value);
@@ -80,7 +85,9 @@ function dibujarTabla() {
       <td class="small text-nowrap">${fecha(t.fecha)}${t.fecha_terminado ? `<br><span class="text-success">✔ ${fecha(t.fecha_terminado)}</span>` : ""}</td>
       <td class="text-nowrap"><strong>${esc(t.placa)}</strong>${t.apodo ? `<br><span class="small text-taller">${esc(t.apodo)}</span>` : ""}</td>
       <td>${esc(t.cliente)}</td>
-      <td class="small">${esc(t.descripcion)}
+      <td class="small">
+        ${t.tipo ? `<span class="badge rounded-pill text-bg-dark border border-secondary mb-1"><i class="bi bi-wrench-adjustable text-taller"></i> ${esc(t.tipo)}</span><br>` : ""}
+        ${esc(t.descripcion)}
         ${t.repuestos ? `<div class="text-secondary"><i class="bi bi-box-seam"></i> ${esc(t.repuestos)} · ${pesos(t.valor_repuestos)}</div>` : ""}
       </td>
       <td class="small">${esc(t.trabajador)}</td>
@@ -96,15 +103,35 @@ function dibujarTabla() {
 
 let espera;
 campo("buscar").addEventListener("input", () => { clearTimeout(espera); espera = setTimeout(cargar, 300); });
-["filtroEstado", "filtroTrabajador", "desde", "hasta"].forEach(id => campo(id).addEventListener("change", cargar));
+["filtroEstado", "filtroTipo", "filtroTrabajador", "desde", "hasta"].forEach(id => campo(id).addEventListener("change", cargar));
+
+// Al escoger el tipo: se pone solo el precio sugerido y el inicio de la descripción
+campo("id_tipo").addEventListener("change", () => {
+  const opcion = campo("id_tipo").selectedOptions[0];
+  if (!opcion || !opcion.value) return;
+  const precio = Number(opcion.dataset.precio) || 0;
+  const costo = campo("costo");
+  if (precio && (!costo.value || Number(costo.value) === costoPuesto)) {
+    costo.value = precio;
+    costoPuesto = precio;
+  }
+  const descripcion = campo("descripcion");
+  if (!descripcion.value.trim() || descripcion.value === descripcionPuesta) {
+    descripcion.value = opcion.textContent + ": ";
+    descripcionPuesta = descripcion.value;
+  }
+});
 
 function abrirFormulario(trabajo = null) {
   form.reset();
   form.classList.remove("was-validated");
   editandoId = trabajo ? trabajo.id_trabajo : null;
+  costoPuesto = null;
+  descripcionPuesta = null;
   campo("tituloModal").textContent = trabajo ? "Editar trabajo" : "Nuevo trabajo";
   if (trabajo) {
     ["id_moto", "descripcion", "costo", "estado"].forEach(c => campo(c).value = trabajo[c]);
+    campo("id_tipo").value = trabajo.id_tipo || "";
     if (puedeAsignar) campo("id_usuario").value = trabajo.id_usuario;
   } else {
     campo("costo").value = "";
@@ -128,6 +155,7 @@ form.addEventListener("submit", async (evento) => {
   const datos = {
     id_moto: Number(campo("id_moto").value),
     id_usuario: puedeAsignar ? Number(campo("id_usuario").value) : null,
+    id_tipo: campo("id_tipo").value ? Number(campo("id_tipo").value) : null,
     descripcion: campo("descripcion").value.trim(),
     costo: Number(campo("costo").value),
     estado: campo("estado").value,
@@ -150,8 +178,8 @@ tabla.addEventListener("click", async (evento) => {
   try {
     if (boton.dataset.avanzar) {
       const nuevo = SIGUIENTE[trabajo.estado];
-      await guardar(id, { id_moto: trabajo.id_moto, id_usuario: trabajo.id_usuario, descripcion: trabajo.descripcion,
-                          costo: trabajo.costo, estado: nuevo });
+      await guardar(id, { id_moto: trabajo.id_moto, id_usuario: trabajo.id_usuario, id_tipo: trabajo.id_tipo,
+                          descripcion: trabajo.descripcion, costo: trabajo.costo, estado: nuevo });
       mostrarMensaje("exito", nuevo === "TERMINADO"
         ? `¡${trabajo.placa} terminado! Se sumaron ${pesos(trabajo.costo)} de mano de obra`
         : `Trabajo de ${trabajo.placa} → ${nuevo}`);
@@ -172,5 +200,3 @@ tabla.addEventListener("click", async (evento) => {
 tabla.innerHTML = `<tr><td colspan="8">${cargando()}</td></tr>`;
 cargarListas().then(cargar).catch(error => mostrarMensaje("error", error.message));
 alActualizar(cargar);
-
-

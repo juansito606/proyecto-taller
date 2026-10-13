@@ -13,14 +13,14 @@
 
   <main class="container py-4">
     <h1 class="h3 fw-bold mb-0"><i class="bi bi-tags text-taller"></i> Catálogo</h1>
-    <p class="text-secondary">Categorías y marcas que se usan para organizar los repuestos.</p>
+    <p class="text-secondary">Categorías y marcas de los repuestos, y los tipos de trabajo que hace el taller.</p>
 
     <div class="row g-3">
       <!-- Categorías -->
       <div class="col-lg-6">
         <div class="card shadow-sm h-100">
           <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h2 class="h6 fw-bold mb-0">Categorías (<span id="contador-categorias">0</span>)</h2>
+            <h2 class="h6 fw-bold mb-0"><i class="bi bi-tags-fill text-taller"></i> Categorías (<span id="contador-categorias">0</span>)</h2>
             <button class="btn btn-sm btn-taller" data-nuevo="categorias"><i class="bi bi-plus-lg"></i> Nueva</button>
           </div>
           <div class="card-body">
@@ -39,7 +39,7 @@
       <div class="col-lg-6">
         <div class="card shadow-sm h-100">
           <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h2 class="h6 fw-bold mb-0">Marcas (<span id="contador-marcas">0</span>)</h2>
+            <h2 class="h6 fw-bold mb-0"><i class="bi bi-award-fill text-taller"></i> Marcas (<span id="contador-marcas">0</span>)</h2>
             <button class="btn btn-sm btn-taller" data-nuevo="marcas"><i class="bi bi-plus-lg"></i> Nueva</button>
           </div>
           <div class="card-body">
@@ -53,10 +53,33 @@
           </div>
         </div>
       </div>
+
+      <!-- Tipos de trabajo -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h6 fw-bold mb-0"><i class="bi bi-wrench-adjustable text-taller"></i> Tipos de trabajo (<span id="contador-tipos">0</span>)</h2>
+            <button class="btn btn-sm btn-taller" data-nuevo="tipos"><i class="bi bi-plus-lg"></i> Nuevo</button>
+          </div>
+          <div class="card-body">
+            <input type="search" class="form-control mb-2" id="buscar-tipos" placeholder="Buscar tipo de trabajo">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead><tr><th>Nombre</th><th>Descripción</th><th class="text-end">Precio sugerido</th><th class="text-center">Trabajos</th><th></th></tr></thead>
+                <tbody id="tabla-tipos"></tbody>
+              </table>
+            </div>
+            <p class="small text-secondary mt-2 mb-0">
+              <i class="bi bi-info-circle"></i> Al escoger un tipo en <strong>Trabajos</strong> o en <strong>Ventas</strong>,
+              el precio sugerido se pone solo como mano de obra (se puede cambiar).
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
-  <!-- Formulario (sirve para categorías y marcas) -->
+  <!-- Formulario (sirve para categorías, marcas y tipos de trabajo) -->
   <div class="modal fade" id="modalCatalogo" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <form class="modal-content" id="formCatalogo" novalidate>
@@ -68,11 +91,18 @@
           <div class="mb-3">
             <label class="form-label">Nombre *</label>
             <input class="form-control" id="nombre" required minlength="2" maxlength="50">
-            <div class="invalid-feedback">Entre 2 y 50 caracteres.</div>
+            <div class="invalid-feedback">Mínimo 2 caracteres.</div>
           </div>
-          <div id="cajaDescripcion">
+          <div class="mb-3" id="cajaDescripcion">
             <label class="form-label">Descripción</label>
             <textarea class="form-control" id="descripcion" rows="2" maxlength="150"></textarea>
+          </div>
+          <div id="cajaPrecio">
+            <label class="form-label">Precio sugerido de mano de obra</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="precio_sugerido" min="0" step="1000" value="0">
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -89,3 +119,4 @@
   <script src="../js/catalogo.js"></script>
 </body>
 </html>
+

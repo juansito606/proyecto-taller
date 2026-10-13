@@ -434,3 +434,137 @@ body.con-lateral .nav-tabs .nav-link.active { color: #fff; font-weight: 600; bac
   .encabezado { color: #000 !important; text-shadow: none; padding: 0 0 1rem !important; }
   .encabezado p { color: #444 !important; }
 }
+
+/* =========================================================
+   COSITAS ANIMADAS: anillos, órbitas, etiquetas y burbujas
+   ========================================================= */
+
+/* ---- Anillo de rayitas y órbita con puntito detrás de cada vitrina ---- */
+.anillo-deco, .orbita-deco {
+  position: absolute; z-index: 0; left: 50%; top: 50%; translate: -50% -50%; aspect-ratio: 1;
+  border-radius: 50%; pointer-events: none;
+}
+.anillo-deco { width: 125%; border: 2px dashed color-mix(in srgb, var(--acento) 70%, transparent); animation: girar 26s linear infinite; }
+.orbita-deco { width: 108%; border: 1px solid rgba(255, 255, 255, .07); animation: girar 8s linear infinite reverse; }
+.orbita-deco::after {
+  content: ""; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%;
+  background: var(--acento); box-shadow: 0 0 16px var(--acento), 0 0 32px var(--acento);
+}
+.vitrina-cine .anillo-deco { left: auto; top: auto; right: -130px; bottom: -130px; translate: none; width: 340px; }
+.vitrina-cine .orbita-deco { display: none; }
+
+/* ---- Etiquetas que flotan alrededor de las fotos ---- */
+.vitrina .ch1 { top: -14px; left: -36px; }
+.vitrina .ch2 { top: 46%; right: -60px; animation-delay: -1.4s; }
+.vitrina .ch3 { bottom: -16px; right: 10%; animation-delay: -2.8s; }
+.vitrina-cine .ch1 { top: 1.4rem; left: auto; right: 1.4rem; }
+.vitrina-cine .ch2 { top: auto; bottom: 4.4rem; right: 1.4rem; }
+.vitrina-cine .ch3 { bottom: 1.4rem; right: 1.4rem; }
+
+/* ---- Páginas sin foto: un ícono grande que late ---- */
+.vitrina-icono { width: 240px; height: 240px; cursor: default; }
+.icono-grande {
+  position: absolute; inset: 40px; z-index: 1; border-radius: 50%; display: grid; place-items: center; font-size: 4.5rem; color: #fff;
+  background: linear-gradient(135deg, var(--acento), color-mix(in srgb, var(--acento) 45%, #000));
+  box-shadow: 0 25px 50px rgba(0, 0, 0, .5), 0 0 60px color-mix(in srgb, var(--acento) 45%, transparent);
+  animation: latidoSuave 3s ease-in-out infinite;
+}
+@keyframes latidoSuave { 50% { transform: scale(1.05); } }
+
+/* ---- Burbujas de rayitas que suben por el fondo ---- */
+.burbuja-deco {
+  position: absolute; bottom: -90px; border-radius: 50%; opacity: .35;
+  border: 2px dashed color-mix(in srgb, var(--acento) 65%, transparent); animation: subir linear infinite;
+}
+.burbuja-deco.llena { border: 0; background: color-mix(in srgb, var(--acento) 40%, transparent); opacity: .25; }
+@keyframes subir { to { transform: translateY(-120vh) rotate(360deg); } }
+
+/* ---- Menú lateral: logo con anillo amarillo, avatar con anillo y burbuja activa ---- */
+.lateral-marca .logo-mini { position: relative; }
+.lateral-marca .logo-mini::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 2px dashed #facc15; animation: girar 10s linear infinite; }
+.lateral-marca .logo-mini i { display: inline-block; animation: llaveMenu 3.5s ease-in-out infinite; }
+@keyframes llaveMenu { 50% { transform: rotate(-22deg); } }
+.lateral-usuario .avatar { position: relative; }
+.lateral-usuario .avatar::after {
+  content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid transparent;
+  border-top-color: #facc15; border-right-color: var(--rojo); animation: girar 2.5s linear infinite;
+}
+.lateral-link.activo .burbuja { position: relative; }
+.lateral-link.activo .burbuja::after { content: ""; position: absolute; inset: -5px; border-radius: .95rem; border: 2px dashed var(--color); animation: girar 9s linear infinite; }
+
+/* ---- Etiqueta del título con puntito que late ---- */
+.etiqueta::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: puntoVivo 1.4s ease-in-out infinite; }
+@keyframes puntoVivo { 50% { opacity: .25; transform: scale(.7); } }
+
+/* ---- Campanita con onda de radar cuando hay novedades ---- */
+.btn-campana:has(.badge:not(.d-none))::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--rojo); animation: radar 1.8s ease-out infinite;
+}
+@keyframes radar { from { transform: scale(1); opacity: .9; } to { transform: scale(1.7); opacity: 0; } }
+
+/* ---- Íconos de los títulos de cada tarjeta, dentro de un círculo con anillo ---- */
+body.con-lateral .card h2 > i.bi:first-child {
+  position: relative; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: .4rem;
+  border-radius: 50%; font-size: .95rem; vertical-align: middle;
+  background: color-mix(in srgb, var(--acento) 20%, transparent); color: var(--acento) !important;
+}
+body.con-lateral .card h2 > i.bi:first-child::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--acento) 70%, transparent); animation: girar 12s linear infinite;
+}
+
+/* ---- Tarjetas de colores: anillo girando en la esquina ---- */
+.kpi::after {
+  content: ""; position: absolute; top: -32px; right: -32px; width: 112px; height: 112px; border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, .35); animation: girar 18s linear infinite; pointer-events: none;
+}
+.tarjeta-kpi .icono { position: relative; }
+.tarjeta-kpi .icono::after { content: ""; position: absolute; inset: -5px; border-radius: 15px; border: 1.5px dashed color-mix(in srgb, var(--acento) 70%, transparent); animation: girar 10s linear infinite; }
+
+/* ---- Botones rojos con destello ---- */
+.btn-taller { position: relative; overflow: hidden; }
+.btn-taller::after {
+  content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; transform: skewX(-20deg); pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .35), transparent); animation: brilloBoton 3.5s ease-in-out infinite;
+}
+@keyframes brilloBoton { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+
+/* ---- Filas de las tablas: rayita de color al pasar el mouse ---- */
+body.con-lateral .table-hover tbody tr:hover > td:first-child { box-shadow: inset 3px 0 0 var(--acento); }
+
+@media (max-width: 767.98px) { .vitrina .ch1 { left: -10px; } .vitrina .ch2 { right: -24px; } }
+
+/* ---- Fotos que rotan: se desvanecen y entra la siguiente ---- */
+.vitrina img { transition: transform .6s, opacity .45s, filter .45s; }
+.vitrina img.cambiando { opacity: 0; filter: blur(8px); transform: scale(1.08); }
+
+/* ---- Cinta de película con todas las fotos de la sección ---- */
+.cinta {
+  position: relative; overflow: hidden; margin: -.4rem 0 1.6rem; padding: 16px 0; border-radius: 1rem;
+  background: #0b0b0d; border: 1px solid rgba(255, 255, 255, .08); box-shadow: 0 18px 40px rgba(0, 0, 0, .4);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.cinta::before, .cinta::after {   /* los huequitos de la película */
+  content: ""; position: absolute; left: 0; right: 0; height: 7px; z-index: 2; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .22) 0 10px, transparent 10px 22px);
+}
+.cinta::before { top: 4px; }
+.cinta::after { bottom: 4px; }
+.cinta-pista { display: flex; gap: 10px; width: max-content; animation: deslizar var(--duracion, 40s) linear infinite; }
+.cinta:hover .cinta-pista { animation-play-state: paused; }
+@keyframes deslizar { to { transform: translateX(calc(-50% - 5px)); } }
+.cuadro {
+  position: relative; flex: 0 0 auto; height: 130px; padding: 0; border: 2px solid transparent; border-radius: .6rem;
+  overflow: hidden; background: #111; cursor: zoom-in; filter: grayscale(.35) brightness(.8);
+  transition: transform .3s, border-color .3s, box-shadow .3s, filter .3s;
+}
+.cuadro img { height: 100%; width: auto; display: block; }
+.cuadro:hover {
+  z-index: 3; transform: scale(1.12); filter: none; border-color: var(--acento);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .6), 0 0 22px color-mix(in srgb, var(--acento) 55%, transparent);
+}
+@media (max-width: 767.98px) { .cuadro { height: 100px; } }
+@media print { .cinta { display: none !important; } }
+
+

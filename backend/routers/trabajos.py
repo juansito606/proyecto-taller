@@ -19,8 +19,9 @@ def _es_trabajador(usuario):
 
 
 def _resumen(t):
-    """-> '«Cambio de aceite» a la moto Hero Hunk 125 (JCI56I «Rodolfa») de Juan Izquierdo'"""
-    return f"«{t['descripcion']}» a la " + moto(t["marca_moto"], t["modelo_moto"], t["placa"], t["apodo"], t["cliente"])
+    """-> '[Frenos] «Cambio de pastillas» a la moto Hero Hunk 125 (JCI56I «Rodolfa») de Juan Izquierdo'"""
+    tipo = f"[{t['tipo']}] " if t.get("tipo") else ""
+    return f"{tipo}«{t['descripcion']}» a la " + moto(t["marca_moto"], t["modelo_moto"], t["placa"], t["apodo"], t["cliente"])
 
 
 def _registrar_cambio(usuario, antes, despues):
@@ -48,11 +49,11 @@ def _registrar_cambio(usuario, antes, despues):
 
 @router.get("", response_model=List[Trabajo])
 def listar(buscar: Optional[str] = None, estado: Optional[str] = None,
-           id_usuario: Optional[int] = None, desde: Optional[date] = None,
-           hasta: Optional[date] = None, usuario=Depends(usuario_actual)):
+           id_usuario: Optional[int] = None, id_tipo: Optional[int] = None,
+           desde: Optional[date] = None, hasta: Optional[date] = None, usuario=Depends(usuario_actual)):
     if _es_trabajador(usuario):          # el mecánico solo ve lo suyo
         id_usuario = usuario["id_usuario"]
-    return servicio.listar(buscar, estado, id_usuario, desde, hasta)
+    return servicio.listar(buscar, estado, id_usuario, desde, hasta, id_tipo)
 
 
 @router.get("/{id_trabajo}", response_model=Trabajo)
@@ -105,5 +106,4 @@ def eliminar(id_trabajo: int, usuario=SOLO_ADMIN):
         raise HTTPException(status_code=404, detail="Trabajo no encontrado")
     actividad.registrar(usuario["id_usuario"], "ELIMINACION", f"eliminó un trabajo de {antes['trabajador']}", _resumen(antes))
     return {"mensaje": "Trabajo eliminado"}
-
 

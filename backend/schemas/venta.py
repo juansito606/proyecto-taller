@@ -10,6 +10,7 @@ class ItemVenta(BaseModel):
 
 
 class TrabajoVenta(BaseModel):
+    id_tipo: Optional[int] = Field(None, description="Tipo de trabajo (Frenos, Motor, Cambio de aceite...)")
     descripcion: str = Field(..., min_length=5, max_length=300)
     id_usuario: int = Field(..., description="Mecánico que hace el trabajo")
     costo: float = Field(..., ge=0, description="Valor de la mano de obra")
@@ -21,6 +22,5 @@ class VentaEntrada(BaseModel):
     id_moto: Optional[int] = None
     trabajo: Optional[TrabajoVenta] = None
     items: List[ItemVenta] = []
-
 
     

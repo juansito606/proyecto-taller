@@ -9,6 +9,7 @@ Estado = Literal["PENDIENTE", "EN PROCESO", "TERMINADO"]
 class TrabajoEntrada(BaseModel):
     id_moto: int
     id_usuario: Optional[int] = Field(None, description="Mecánico. Si lo registra un trabajador, se pone solo")
+    id_tipo: Optional[int] = Field(None, description="Tipo de trabajo (Frenos, Motor, Cambio de aceite...)")
     descripcion: str = Field(..., min_length=5, max_length=300)
     fecha: Optional[datetime] = Field(None, description="Si se deja vacía, se usa la fecha de hoy")
     costo: float = Field(0, ge=0)
@@ -25,6 +26,8 @@ class Trabajo(BaseModel):
     cliente: str
     id_usuario: int
     trabajador: str
+    id_tipo: Optional[int] = None
+    tipo: Optional[str] = None
     descripcion: str
     fecha: datetime
     costo: float
@@ -32,6 +35,4 @@ class Trabajo(BaseModel):
     fecha_terminado: Optional[datetime] = None
     repuestos: Optional[str] = None
     valor_repuestos: float = 0
-
-
     

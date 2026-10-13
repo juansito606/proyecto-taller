@@ -1,68 +1,40 @@
-/* login.css - Pantalla de ingreso animada de El Hospital */
+/* login.css - Login de El Hospital: las 3 fotos de Rodolfa de fondo y la tarjeta en el centro */
 .lg-body { margin: 0; min-height: 100vh; font-family: "Poppins", system-ui, sans-serif; background: #08080a; color: #fff; overflow-x: hidden; }
 
-/* ---------- Fondo: luces que se mueven + puntitos ---------- */
-.lg-fondo { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
-.lg-mancha { position: absolute; border-radius: 50%; filter: blur(90px); animation: lgDeriva 22s ease-in-out infinite alternate; }
-.lg-mancha.m1 { width: 560px; height: 560px; background: #e10600; opacity: .45; top: -180px; left: -120px; }
-.lg-mancha.m2 { width: 480px; height: 480px; background: #ff7a00; opacity: .2; bottom: -200px; right: -120px; animation-duration: 28s; }
-.lg-mancha.m3 { width: 420px; height: 420px; background: #6d28d9; opacity: .18; top: 40%; left: 40%; animation-duration: 34s; }
-.lg-puntos {
-  position: absolute; inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, .08) 1px, transparent 1.3px); background-size: 24px 24px;
-  -webkit-mask-image: radial-gradient(circle at center, #000, transparent 75%); mask-image: radial-gradient(circle at center, #000, transparent 75%);
+/* ---------- FONDO: 3 fotos en columnas (la que tocas se agranda) ---------- */
+.lg-fotos { position: fixed; inset: 0; z-index: 0; display: flex; gap: 6px; background: #08080a; transition: transform .3s ease-out; }
+.lg-col {
+  position: relative; flex: 1; overflow: hidden; background-size: cover; background-position: center;
+  filter: brightness(.55) saturate(1.1); transition: flex .7s cubic-bezier(.2, .8, .2, 1), filter .5s;
+  animation: lgColEntra 1.1s cubic-bezier(.2, .8, .2, 1) both;
+}
+/* Si falta rodolfa2 o rodolfa3, se usa rodolfa.jpg */
+.lg-col.c1 { background-image: url("../assets/rodolfa.jpg"); }
+.lg-col.c2 { background-image: url("../assets/rodolfa2.jpg"), url("../assets/rodolfa.jpg"); animation-delay: .12s; }
+.lg-col.c3 { background-image: url("../assets/rodolfa3.jpg"), url("../assets/rodolfa.jpg"); animation-delay: .24s; }
+.lg-col:hover { flex: 1.6; filter: brightness(.95) saturate(1.25); }
+.lg-col::after {   /* brillo rojo abajo */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 55%, rgba(225, 6, 0, .35));
+}
+.lg-col-texto {
+  position: absolute; z-index: 1; left: 1.4rem; bottom: 1.2rem; font-size: .85rem; font-weight: 600; letter-spacing: .15em;
+  text-transform: uppercase; opacity: 0; transform: translateY(14px); transition: .4s;
+}
+.lg-col-texto b { font-size: 2.6rem; font-weight: 900; letter-spacing: 0; margin-right: .4rem; color: transparent; -webkit-text-stroke: 1.5px #fff; vertical-align: middle; }
+.lg-col:hover .lg-col-texto { opacity: 1; transform: none; }
+.lg-velo {   /* oscurece el centro para que la tarjeta se lea bien */
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse 45% 70% at center, rgba(8, 8, 10, .75), transparent 75%);
 }
 
-.lg-contenedor { position: relative; z-index: 1; min-height: 100vh; display: grid; grid-template-columns: 1.15fr 1fr; }
-@media (max-width: 991.98px) { .lg-contenedor { grid-template-columns: 1fr; } }
-
-/* ---------- Lado izquierdo: Rodolfa con anillos y etiquetas ---------- */
-.lg-escena { position: relative; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; }
-.lg-marco { position: relative; width: 300px; height: 400px; animation: lgEntra 1s cubic-bezier(.2, .8, .2, 1) both; }
-.lg-anillo-grande {
-  position: absolute; width: 520px; height: 520px; left: 50%; top: 50%; margin: -260px 0 0 -260px;
-  border-radius: 50%; border: 3px dashed rgba(225, 6, 0, .55); animation: lgGira 30s linear infinite;
-}
-.lg-orbita {
-  position: absolute; width: 440px; height: 440px; left: 50%; top: 50%; margin: -220px 0 0 -220px;
-  border-radius: 50%; border: 1px solid rgba(255, 255, 255, .08); animation: lgGira 9s linear infinite reverse;
-}
-.lg-orbita::after {
-  content: ""; position: absolute; top: -7px; left: 50%; width: 14px; height: 14px; margin-left: -7px;
-  border-radius: 50%; background: #ff3b30; box-shadow: 0 0 20px #ff3b30, 0 0 40px #e10600;
-}
-.lg-foto {
-  position: absolute; inset: 0; border-radius: 1.6rem; overflow: hidden; border: 3px solid rgba(255, 255, 255, .92);
-  box-shadow: 0 40px 80px rgba(0, 0, 0, .6), 0 0 90px rgba(225, 6, 0, .35); transition: transform .2s ease-out;
-}
-.lg-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.lg-foto-brillo {
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle at var(--bx, 30%) var(--by, 20%), rgba(255, 255, 255, .3), transparent 45%);
-}
-.lg-chip {
-  position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem;
-  border-radius: 2rem; font-size: .82rem; font-weight: 600; white-space: nowrap; color: #fff;
-  background: rgba(18, 18, 22, .85); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, .15);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, .45); animation: lgFlotar 4s ease-in-out infinite; transition: translate .2s ease-out;
-}
-.lg-chip i { color: #ff3b30; }
-.lg-chip.c1 { top: 30px; left: -110px; }
-.lg-chip.c2 { top: 130px; right: -120px; animation-delay: -1s; }
-.lg-chip.c3 { bottom: 90px; left: -125px; animation-delay: -2s; }
-.lg-chip.c4 { bottom: 10px; right: -95px; animation-delay: -3s; }
-.lg-frase { margin-top: 4.5rem; text-align: center; animation: lgEntra 1s .3s cubic-bezier(.2, .8, .2, 1) both; }
-.lg-frase h2 { font-weight: 800; font-size: clamp(1.6rem, 2.4vw, 2.3rem); line-height: 1.25; margin: 0; }
-.lg-escribe, .lg-cursor { color: #ff3b30; }
-.lg-cursor { font-weight: 300; animation: lgParpadeo 1s steps(1) infinite; }
-
-/* ---------- Lado derecho: tarjeta del formulario ---------- */
-.lg-panel { display: flex; align-items: center; justify-content: center; padding: 2rem 1.2rem; }
+/* ---------- CENTRO: la tarjeta ---------- */
+.lg-centro { position: relative; z-index: 2; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1.2rem; pointer-events: none; }
 .lg-tarjeta {
-  position: relative; width: 100%; max-width: 410px; padding: 2.6rem 2.2rem 2rem; border-radius: 1.6rem; text-align: center;
-  background: rgba(18, 18, 22, .72); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, .09); box-shadow: 0 30px 70px rgba(0, 0, 0, .55);
-  animation: lgEntra .9s .15s cubic-bezier(.2, .8, .2, 1) both;
+  position: relative; width: 100%; max-width: 420px; padding: 2.4rem 2.2rem 1.8rem; border-radius: 1.8rem; text-align: center; pointer-events: auto;
+  background: rgba(14, 14, 18, .72); backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 40px 90px rgba(0, 0, 0, .7), 0 0 80px rgba(225, 6, 0, .18);
+  animation: lgEntra .9s .3s cubic-bezier(.2, .8, .2, 1) both;
 }
 .lg-tarjeta::before {   /* borde que brilla donde está el mouse */
   content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1.5px; pointer-events: none;
@@ -72,9 +44,22 @@
 }
 .lg-tarjeta.temblor { animation: lgTemblor .5s; }
 
+/* Etiquetas flotando alrededor de la tarjeta */
+.lg-chip {
+  position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem;
+  border-radius: 2rem; font-size: .8rem; font-weight: 600; white-space: nowrap; color: #fff; pointer-events: none;
+  background: rgba(18, 18, 22, .88); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, .15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .5); animation: lgFlotar 4s ease-in-out infinite; transition: translate .25s ease-out;
+}
+.lg-chip i { color: #ff3b30; }
+.lg-chip.c1 { top: 9%; left: -78px; }
+.lg-chip.c2 { top: 26%; right: -84px; animation-delay: -1s; }
+.lg-chip.c3 { bottom: 26%; left: -86px; animation-delay: -2s; }
+.lg-chip.c4 { bottom: 9%; right: -74px; animation-delay: -3s; }
+
 .lg-logo {
-  position: relative; width: 84px; height: 84px; margin: .4rem auto 1.3rem; display: grid; place-items: center;
-  border-radius: 1.4rem; font-size: 2.4rem; background: linear-gradient(135deg, #e10600, #ff4d3d);
+  position: relative; width: 80px; height: 80px; margin: .4rem auto 1.2rem; display: grid; place-items: center;
+  border-radius: 1.4rem; font-size: 2.3rem; background: linear-gradient(135deg, #e10600, #ff4d3d);
   box-shadow: 0 12px 30px rgba(225, 6, 0, .55); animation: lgLatido 2.4s ease-in-out infinite;
 }
 .lg-logo i { display: inline-block; animation: lgLlave 3.5s ease-in-out infinite; }
@@ -83,12 +68,15 @@
 
 .lg-tarjeta h1 { font-weight: 800; font-size: 1.9rem; margin: 0; }
 .lg-tarjeta h1 i { color: #ff3b30; display: inline-block; animation: lgLatido 1.2s ease-in-out infinite; }
-.lg-sub { color: rgba(255, 255, 255, .55); margin: 0; font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; }
-.lg-pulso { width: 100%; height: 40px; margin: .5rem 0 1.4rem; }
+.lg-sub { color: rgba(255, 255, 255, .55); margin: 0; font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; }
+.lg-pulso { width: 100%; height: 38px; margin: .4rem 0 .4rem; }
 .lg-pulso path {
   fill: none; stroke: #ff3b30; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
   stroke-dasharray: 420; stroke-dashoffset: 420; filter: drop-shadow(0 0 6px #e10600); animation: lgPulso 2.6s ease-in-out infinite;
 }
+.lg-frase { font-size: .85rem; color: rgba(255, 255, 255, .7); margin: 0 0 1.3rem; min-height: 1.3em; }
+.lg-frase span { color: #ff3b30; font-weight: 600; }
+.lg-cursor { font-weight: 300; animation: lgParpadeo 1s steps(1) infinite; }
 
 /* Campos con etiqueta que sube */
 .lg-campo { position: relative; margin-bottom: 1rem; text-align: left; }
@@ -125,26 +113,44 @@
   content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; transform: skewX(-20deg);
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .35), transparent); animation: lgBrillo 3.2s ease-in-out infinite;
 }
-.lg-pie { margin: 1.4rem 0 0; font-size: .75rem; color: rgba(255, 255, 255, .4); }
+.lg-pie { margin: 1.3rem 0 0; font-size: .75rem; color: rgba(255, 255, 255, .4); }
 
-/* Pantalla de bienvenida al entrar */
+/* ---------- BIENVENIDA: pulso gigante + "¡Hola, Juan!" ---------- */
 .lg-bienvenida {
-  position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem;
-  background: radial-gradient(circle at center, #3a0703, #08080a 70%); clip-path: circle(0% at 50% 50%);
-  transition: clip-path .7s cubic-bezier(.7, 0, .3, 1); pointer-events: none;
+  position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem;
+  background: radial-gradient(circle at center, #4a0805, #08080a 70%); clip-path: circle(0% at 50% 50%);
+  transition: clip-path .8s cubic-bezier(.7, 0, .3, 1); pointer-events: none; overflow: hidden;
 }
 .lg-bienvenida.activa { clip-path: circle(150% at 50% 50%); pointer-events: auto; }
-.lg-llave {
-  width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; font-size: 2.8rem;
-  background: linear-gradient(135deg, #e10600, #ff4d3d); box-shadow: 0 0 60px rgba(225, 6, 0, .7); animation: lgGira 1s linear infinite;
+.lg-ecg { position: absolute; left: 0; top: 40%; width: 100%; height: 30vh; translate: 0 -50%; opacity: .85; }
+.lg-ecg .trazo {
+  fill: none; stroke: #ff3b30; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 2600; stroke-dashoffset: 2600; filter: drop-shadow(0 0 10px #ff3b30) drop-shadow(0 0 30px #e10600);
 }
-.lg-bienvenida p { font-size: 1.7rem; font-weight: 800; margin: 0; opacity: 0; transform: translateY(12px); transition: .4s .4s; }
-.lg-bienvenida.activa p { opacity: 1; transform: none; }
+.lg-bienvenida.activa .lg-ecg .trazo { animation: lgEcg 1.6s .35s ease-in-out forwards; }
+.lg-ecg .chispa {   /* el pulso de luz que recorre la línea, como en un monitor */
+  fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 160 2600; stroke-dashoffset: 160; opacity: 0; filter: drop-shadow(0 0 12px #fff) drop-shadow(0 0 30px #ff3b30);
+}
+.lg-bienvenida.activa .lg-ecg .chispa { animation: lgChispa 1.4s 1.9s linear infinite; }
+.lg-corazon { position: relative; z-index: 1; font-size: 9rem; margin-bottom: 1.5rem; line-height: 1; color: #ff3b30; filter: drop-shadow(0 0 30px #ff3b30); transform: scale(0); }
+.lg-bienvenida.activa .lg-corazon { animation: lgCorazon 1.1s .5s ease-out forwards, lgLatidoFuerte .9s 1.6s ease-in-out infinite; }
+.lg-hola { position: relative; z-index: 1; margin: 0; padding: 0 1rem; border-radius: 1rem; background: radial-gradient(ellipse at center, rgba(8, 8, 10, .85), transparent 70%); font-size: clamp(2.8rem, 7vw, 5.5rem); font-weight: 900; letter-spacing: -.02em; text-align: center; }
+.lg-hola span {
+  display: inline-block; opacity: 0;
+  background: linear-gradient(180deg, #fff 30%, #ff6b5e); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 6px 25px rgba(225, 6, 0, .6));
+}
+.lg-bienvenida.activa .lg-hola span { animation: lgLetra .7s calc(.9s + var(--i) * .06s) cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.lg-hola .mano { background: none; color: initial; -webkit-background-clip: initial; background-clip: initial; }
+.lg-bienvenida.activa .lg-hola .mano { animation: lgLetra .7s calc(.9s + var(--i) * .06s) cubic-bezier(.2, 1.4, .4, 1) forwards, lgSaludo 1s 1.8s ease-in-out 2; transform-origin: 70% 80%; }
+.lg-rol { position: relative; z-index: 1; margin: 0; font-size: 1.05rem; letter-spacing: .25em; text-transform: uppercase; color: rgba(255, 255, 255, .75); opacity: 0; }
+.lg-bienvenida.activa .lg-rol { animation: lgSube .6s 1.7s ease-out forwards; }
 
 /* ---------- Animaciones ---------- */
-@keyframes lgEntra { from { opacity: 0; transform: translateY(30px) scale(.97); } }
+@keyframes lgColEntra { from { opacity: 0; transform: translateY(60px) scale(1.08); } }
+@keyframes lgEntra { from { opacity: 0; transform: translateY(30px) scale(.96); } }
 @keyframes lgGira { to { transform: rotate(360deg); } }
-@keyframes lgDeriva { to { transform: translate(90px, 70px) scale(1.15); } }
 @keyframes lgFlotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes lgLatido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 @keyframes lgLlave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-22deg); } }
@@ -152,6 +158,18 @@
 @keyframes lgPulso { 0% { stroke-dashoffset: 420; } 50% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -420; } }
 @keyframes lgBrillo { 0%, 55% { left: -60%; } 100% { left: 130%; } }
 @keyframes lgTemblor { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+@keyframes lgEcg { to { stroke-dashoffset: 0; } }
+@keyframes lgChispa { 0% { stroke-dashoffset: 160; opacity: 1; } 100% { stroke-dashoffset: -2600; opacity: 1; } }
+@keyframes lgCorazon { 0% { transform: scale(0); } 50% { transform: scale(1.35); } 70% { transform: scale(.9); } 100% { transform: scale(1); } }
+@keyframes lgLatidoFuerte { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(1); } 45% { transform: scale(1.12); } }
+@keyframes lgLetra { 0% { opacity: 0; transform: translateY(60px) scale(.4) rotate(-12deg); filter: blur(10px); } 100% { opacity: 1; transform: none; filter: drop-shadow(0 6px 25px rgba(225, 6, 0, .6)); } }
+@keyframes lgSaludo { 0%, 100% { rotate: 0deg; } 25% { rotate: 18deg; } 75% { rotate: -12deg; } }
+@keyframes lgSube { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Celular: solo una foto de fondo y la tarjeta al centro ---------- */
+@media (max-width: 767.98px) {
+  .lg-col.c2, .lg-col.c3, .lg-chip { display: none; }
+  .lg-col.c1 { filter: brightness(.45); }
+  .lg-tarjeta { padding: 2rem 1.4rem 1.5rem; }
+}
 @media (prefers-reduced-motion: reduce) { .lg-body * { animation: none !important; transition: none !important; } }
-
-

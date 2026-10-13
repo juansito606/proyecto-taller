@@ -26,25 +26,28 @@
     <!-- Filtros -->
     <div class="card shadow-sm mb-3"><div class="card-body">
       <div class="row g-2">
-        <div class="col-md-3">
+        <div class="col-12 col-md-3">
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="search" class="form-control" id="buscar" placeholder="Placa o apodo">
           </div>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md">
           <select class="form-select" id="filtroEstado">
             <option value="">Todos los estados</option>
             <option>PENDIENTE</option><option>EN PROCESO</option><option>TERMINADO</option>
           </select>
         </div>
-        <div class="col-6 col-md-3 d-none" id="cajaFiltroTrabajador">
+        <div class="col-6 col-md">
+          <select class="form-select" id="filtroTipo"></select>
+        </div>
+        <div class="col-6 col-md d-none" id="cajaFiltroTrabajador">
           <select class="form-select" id="filtroTrabajador"></select>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md">
           <input type="date" class="form-control" id="desde" title="Desde">
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md">
           <input type="date" class="form-control" id="hasta" title="Hasta">
         </div>
       </div>
@@ -82,6 +85,11 @@
             <div class="invalid-feedback">Elija el trabajador.</div>
           </div>
           <div class="col-12">
+            <label class="form-label">Tipo de trabajo</label>
+            <select class="form-select" id="id_tipo"></select>
+            <div class="form-text">Al escogerlo se pone solo el precio sugerido.</div>
+          </div>
+          <div class="col-12">
             <label class="form-label">¿Qué se le hizo / qué hay que hacerle? *</label>
             <textarea class="form-control" id="descripcion" rows="3" required minlength="5" maxlength="300"></textarea>
             <div class="invalid-feedback">Mínimo 5 caracteres.</div>
@@ -99,7 +107,7 @@
           </div>
           <p class="small text-secondary mb-0">
             <i class="bi bi-info-circle"></i> La mano de obra se suma a los ingresos cuando el trabajo queda <strong>TERMINADO</strong>.
-            Los repuestos usados se cobran aparte con el botón <i class="bi bi-cart-plus"></i>.
+            Los repuestos usados se cobran aparte en <strong>Ventas</strong>.
           </p>
         </div>
         <div class="modal-footer">
@@ -116,5 +124,4 @@
   <script src="../js/trabajos.js"></script>
 </body>
 </html>
-
 

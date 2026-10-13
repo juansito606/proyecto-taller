@@ -1,37 +1,49 @@
-// catalogo.js - Categorías y marcas (solo administrador)
-iniciarPagina(["ADMINISTRADOR"]);
+// catalogo.js - Categorías, marcas y tipos de trabajo (admin y vendedora; solo el admin elimina)
+const usuario = iniciarPagina(["ADMINISTRADOR", "VENDEDOR"]);
+const esAdmin = usuario.rol === "ADMINISTRADOR";
 
 const form = document.getElementById("formCatalogo");
 const modal = new bootstrap.Modal("#modalCatalogo");
 const campo = id => document.getElementById(id);
 
-// Las dos listas funcionan igual; solo cambia esta configuración
+// Las tres listas funcionan igual; solo cambia esta configuración
 const TIPOS = {
-  categorias: { ruta: "/categorias", id: "id_categoria", nombre: "categoría", conDescripcion: true, datos: [] },
-  marcas:     { ruta: "/marcas",     id: "id_marca",     nombre: "marca",     conDescripcion: false, datos: [] },
+  categorias: { ruta: "/categorias",    id: "id_categoria", nombre: "categoría",       largo: 50, descripcion: 150, datos: [] },
+  marcas:     { ruta: "/marcas",        id: "id_marca",     nombre: "marca",           largo: 50, descripcion: 0,   datos: [] },
+  tipos:      { ruta: "/tipos-trabajo", id: "id_tipo",      nombre: "tipo de trabajo", largo: 60, descripcion: 200, conPrecio: true, datos: [] },
 };
 
 let tipoActual = null;
 let editandoId = null;
 
+function columnas(t) {
+  return 2 + (t.descripcion ? 1 : 0) + (t.conPrecio ? 2 : 0);
+}
+
+function fila(tipo, t, x) {
+  return `
+    <tr>
+      <td class="fw-semibold">${esc(x.nombre)}</td>
+      ${t.descripcion ? `<td class="small text-secondary">${esc(x.descripcion || "—")}</td>` : ""}
+      ${t.conPrecio ? `
+        <td class="text-end">${pesos(x.precio_sugerido)}</td>
+        <td class="text-center"><span class="badge text-bg-secondary">${x.trabajos}</span></td>` : ""}
+      <td class="text-end text-nowrap">
+        <button class="btn btn-sm btn-outline-secondary" data-editar="${tipo}" data-id="${x[t.id]}" title="Editar"><i class="bi bi-pencil"></i></button>
+        ${esAdmin ? `<button class="btn btn-sm btn-outline-danger" data-eliminar="${tipo}" data-id="${x[t.id]}" title="Eliminar"><i class="bi bi-trash"></i></button>` : ""}
+      </td>
+    </tr>`;
+}
+
 async function cargar(tipo) {
   const t = TIPOS[tipo];
   const buscar = campo("buscar-" + tipo).value.trim();
-  const columnas = t.conDescripcion ? 3 : 2;
-  campo("tabla-" + tipo).innerHTML = `<tr><td colspan="${columnas}">${cargando()}</td></tr>`;
+  campo("tabla-" + tipo).innerHTML = `<tr><td colspan="${columnas(t)}">${cargando()}</td></tr>`;
   try {
     t.datos = await api(t.ruta + (buscar ? "?buscar=" + encodeURIComponent(buscar) : ""));
     campo("contador-" + tipo).textContent = t.datos.length;
-    campo("tabla-" + tipo).innerHTML = t.datos.length ? t.datos.map(x => `
-      <tr>
-        <td class="fw-semibold">${esc(x.nombre)}</td>
-        ${t.conDescripcion ? `<td class="small text-secondary">${esc(x.descripcion || "—")}</td>` : ""}
-        <td class="text-end text-nowrap">
-          <button class="btn btn-sm btn-outline-secondary" data-editar="${tipo}" data-id="${x[t.id]}"><i class="bi bi-pencil"></i></button>
-          <button class="btn btn-sm btn-outline-danger" data-eliminar="${tipo}" data-id="${x[t.id]}"><i class="bi bi-trash"></i></button>
-        </td>
-      </tr>`).join("")
-      : `<tr><td colspan="${columnas}" class="text-secondary">Sin resultados.</td></tr>`;
+    campo("tabla-" + tipo).innerHTML = t.datos.length ? t.datos.map(x => fila(tipo, t, x)).join("")
+      : `<tr><td colspan="${columnas(t)}" class="text-secondary">Sin resultados.</td></tr>`;
   } catch (error) {
     mostrarMensaje("error", error.message);
   }
@@ -49,11 +61,16 @@ function abrirFormulario(tipo, registro = null) {
   editandoId = registro ? registro[t.id] : null;
   form.reset();
   form.classList.remove("was-validated");
-  campo("tituloModal").textContent = (registro ? "Editar " : "Nueva ") + t.nombre;
-  campo("cajaDescripcion").classList.toggle("d-none", !t.conDescripcion);
+  campo("tituloModal").textContent = (registro ? "Editar " : "Agregar ") + t.nombre;
+  campo("nombre").maxLength = t.largo;
+  campo("descripcion").maxLength = t.descripcion || 150;
+  campo("cajaDescripcion").classList.toggle("d-none", !t.descripcion);
+  campo("cajaPrecio").classList.toggle("d-none", !t.conPrecio);
+  campo("precio_sugerido").value = 0;
   if (registro) {
     campo("nombre").value = registro.nombre;
     campo("descripcion").value = registro.descripcion || "";
+    if (t.conPrecio) campo("precio_sugerido").value = registro.precio_sugerido;
   }
   modal.show();
 }
@@ -71,13 +88,13 @@ document.addEventListener("click", async (evento) => {
 
   if (boton.dataset.editar) return abrirFormulario(tipo, registro);
 
-  if (!await confirmar(`¿Eliminar la ${t.nombre} "${registro.nombre}"?`)) return;
+  if (!await confirmar(`¿Eliminar "${registro.nombre}"?`)) return;
   try {
     await api(`${t.ruta}/${boton.dataset.id}`, { method: "DELETE" });
-    mostrarMensaje("exito", `${registro.nombre} eliminada`);
+    mostrarMensaje("exito", `"${registro.nombre}" eliminado del catálogo`);
     cargar(tipo);
   } catch (error) {
-    mostrarMensaje("error", error.message);   // si tiene repuestos, Oracle no deja
+    mostrarMensaje("error", error.message);   // si ya se usa en repuestos o trabajos, Oracle no deja
   }
 });
 
@@ -89,12 +106,13 @@ form.addEventListener("submit", async (evento) => {
   }
   const t = TIPOS[tipoActual];
   const datos = { nombre: campo("nombre").value.trim() };
-  if (t.conDescripcion) datos.descripcion = campo("descripcion").value.trim() || null;
+  if (t.descripcion) datos.descripcion = campo("descripcion").value.trim() || null;
+  if (t.conPrecio) datos.precio_sugerido = Number(campo("precio_sugerido").value) || 0;
 
   try {
     await api(editandoId ? `${t.ruta}/${editandoId}` : t.ruta,
               { method: editandoId ? "PUT" : "POST", body: JSON.stringify(datos) });
-    mostrarMensaje("exito", `${datos.nombre} guardada`);
+    mostrarMensaje("exito", `"${datos.nombre}" guardado`);
     modal.hide();
     cargar(tipoActual);
   } catch (error) {
@@ -104,5 +122,5 @@ form.addEventListener("submit", async (evento) => {
 
 cargar("categorias");
 cargar("marcas");
-
+cargar("tipos");
 

@@ -1,6 +1,6 @@
 // repuestos.js - Inventario: listar, buscar, filtrar, crear, editar y eliminar
 const usuario = iniciarPagina();
-const esAdmin = usuario.rol === "ADMINISTRADOR";
+const esAdmin = ["ADMINISTRADOR", "VENDEDOR"].includes(usuario.rol);   // Sofía también maneja el inventario
 
 const tabla = document.getElementById("tabla");
 const form = document.getElementById("formRepuesto");

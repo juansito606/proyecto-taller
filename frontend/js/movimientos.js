@@ -12,16 +12,22 @@ const COLOR_ESTADO = { "PENDIENTE": "text-bg-warning", "EN PROCESO": "text-bg-in
 
 let ventas = [], compras = [];
 let repuestos = [], clientes = [], motos = [], mecanicos = [];
+let costoPuesto = null, descripcionPuesta = null;   // lo que el tipo de trabajo escribió solo
 
 const hoy = () => new Date().toLocaleDateString("en-CA");   // "2026-10-12" en hora de Colombia
 
 // ---------- Listas para los formularios ----------
 async function cargarListas() {
-  [repuestos, clientes, motos, mecanicos] = await Promise.all([
+  let tipos, categorias, marcas;
+  [repuestos, clientes, motos, mecanicos, tipos, categorias, marcas] = await Promise.all([
     api("/repuestos"), api("/clientes"), api("/motos"), api("/usuarios/mecanicos"),
+    api("/tipos-trabajo"), api("/categorias"), api("/marcas"),
   ]);
   llenarSelect(campo("v_cliente"), clientes, "id_cliente", "nombre", "Venta de mostrador (sin cliente)");
   llenarSelect(campo("t_mecanico"), mecanicos, "id_usuario", "nombre", "¿Quién la trabaja?");
+  llenarTipos(campo("t_tipo"), tipos, "Tipo de trabajo (opcional)");
+  llenarSelect(campo("n_categoria"), categorias, "id_categoria", "nombre", "Categoría...");
+  llenarSelect(campo("n_marca"), marcas, "id_marca", "nombre", "Marca...");
 }
 
 // ---------- Cargar ventas y compras ----------
@@ -73,7 +79,9 @@ function tarjetaVenta(v) {
 
   const lineaMano = tieneTrabajo ? `
     <div class="linea">
-      <span><i class="bi bi-tools text-secondary"></i> Mano de obra: ${esc(v.trabajo)}
+      <span><i class="bi bi-tools text-secondary"></i> Mano de obra:
+        ${v.tipo_trabajo ? `<span class="badge rounded-pill text-bg-dark border border-secondary"><i class="bi bi-wrench-adjustable text-taller"></i> ${esc(v.tipo_trabajo)}</span>` : ""}
+        ${esc(v.trabajo)}
         <span class="text-secondary">· ${esc(v.mecanico)}</span>
         <span class="badge ${COLOR_ESTADO[v.estado_trabajo]}">${v.estado_trabajo}</span></span>
       <span class="text-nowrap">${pesos(v.mano_obra)}</span>
@@ -143,6 +151,8 @@ function abrirVenta() {
   formVenta.reset();
   formVenta.classList.remove("was-validated");
   campo("itemsVenta").innerHTML = "";
+  costoPuesto = null;
+  descripcionPuesta = null;
   actualizarMotos();
   alternarTrabajo();
   modalVenta.show();
@@ -169,6 +179,24 @@ function alternarTrabajo() {
   recalcular();
 }
 campo("v_conTrabajo").addEventListener("change", alternarTrabajo);
+
+// Al escoger el tipo de trabajo: se pone solo el precio sugerido y el inicio de la descripción
+campo("t_tipo").addEventListener("change", () => {
+  const opcion = campo("t_tipo").selectedOptions[0];
+  if (!opcion || !opcion.value) return;
+  const precio = Number(opcion.dataset.precio) || 0;
+  const costo = campo("t_costo");
+  if (precio && (!costo.value || Number(costo.value) === costoPuesto)) {
+    costo.value = precio;
+    costoPuesto = precio;
+  }
+  const descripcion = campo("t_descripcion");
+  if (!descripcion.value.trim() || descripcion.value === descripcionPuesta) {
+    descripcion.value = opcion.textContent + ": ";
+    descripcionPuesta = descripcion.value;
+  }
+  recalcular();
+});
 
 // Agregar una fila de repuesto
 function agregarItem() {
@@ -252,6 +280,7 @@ formVenta.addEventListener("submit", async (evento) => {
     id_cliente: campo("v_cliente").value ? Number(campo("v_cliente").value) : null,
     id_moto: campo("v_moto").value ? Number(campo("v_moto").value) : null,
     trabajo: conTrabajo ? {
+      id_tipo: campo("t_tipo").value ? Number(campo("t_tipo").value) : null,
       descripcion: campo("t_descripcion").value.trim(),
       id_usuario: Number(campo("t_mecanico").value),
       costo: Number(campo("t_costo").value),
@@ -285,8 +314,19 @@ campo("btnCompra").addEventListener("click", () => {
   formCompra.classList.remove("was-validated");
   llenarSelect(campo("c_repuesto"), repuestos, "id_repuesto", "nombre", "Elija...");
   campo("c_total").textContent = pesos(0);
+  alternarNuevoRepuesto();
   modalCompra.show();
 });
+
+// Repuesto que todavía no existe (ej: compré un volante para la Hunk 125): se llenan sus datos aquí mismo
+function alternarNuevoRepuesto() {
+  const nuevo = campo("c_esNuevo").checked;
+  campo("cajaRepExistente").classList.toggle("d-none", nuevo);
+  campo("cajaNuevoRep").classList.toggle("d-none", !nuevo);
+  campo("c_repuesto").required = !nuevo;
+  ["n_nombre", "n_referencia", "n_categoria", "n_marca", "n_precio"].forEach(id => campo(id).required = nuevo);
+}
+campo("c_esNuevo").addEventListener("change", alternarNuevoRepuesto);
 ["c_cantidad", "c_precio"].forEach(id => campo(id).addEventListener("input", () => {
   campo("c_total").textContent = pesos((Number(campo("c_cantidad").value) || 0) * (Number(campo("c_precio").value) || 0));
 }));
@@ -297,9 +337,29 @@ formCompra.addEventListener("submit", async (evento) => {
     return;
   }
   try {
+    let idRepuesto = Number(campo("c_repuesto").value);
+    if (campo("c_esNuevo").checked) {
+      // 1. Se crea el repuesto con stock 0...
+      const nuevo = await api("/repuestos", { method: "POST", body: JSON.stringify({
+        referencia: campo("n_referencia").value.trim(),
+        nombre: campo("n_nombre").value.trim(),
+        id_categoria: Number(campo("n_categoria").value),
+        id_marca: Number(campo("n_marca").value),
+        precio: Number(campo("n_precio").value),
+        stock: 0,
+        stock_minimo: Number(campo("n_minimo").value) || 0,
+      }) });
+      idRepuesto = nuevo.id_repuesto;
+      repuestos = await api("/repuestos");
+      llenarSelect(campo("c_repuesto"), repuestos, "id_repuesto", "nombre", "Elija...");
+      campo("c_repuesto").value = idRepuesto;
+      campo("c_esNuevo").checked = false;   // si la compra falla, ya queda escogido en la lista
+      alternarNuevoRepuesto();
+    }
+    // 2. ...y la compra le suma el stock
     const compra = await api("/movimientos", { method: "POST", body: JSON.stringify({
       tipo: "COMPRA",
-      id_repuesto: Number(campo("c_repuesto").value),
+      id_repuesto: idRepuesto,
       cantidad: Number(campo("c_cantidad").value),
       precio_unitario: Number(campo("c_precio").value),
     }) });

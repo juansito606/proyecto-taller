@@ -20,6 +20,25 @@
       <button class="btn btn-outline-dark no-imprimir" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button>
     </div>
 
+    <!-- Hoy en el taller -->
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h6 fw-bold mb-0"><i class="bi bi-lightning-charge text-taller"></i> Hoy en el taller</h2>
+        <span class="badge text-bg-light no-imprimir"><i class="bi bi-arrow-repeat"></i> Se actualiza solo · <span id="actualizado"></span></span>
+      </div>
+      <div class="row g-3 text-center mb-3" id="hoyResumen"><div class="text-secondary small">Cargando...</div></div>
+      <div class="row g-3">
+        <div class="col-lg-7">
+          <h3 class="small fw-bold text-secondary">VENTAS DE HOY</h3>
+          <ul class="list-group list-group-flush" id="hoyVentas"></ul>
+        </div>
+        <div class="col-lg-5">
+          <h3 class="small fw-bold text-secondary">TRABAJOS TERMINADOS HOY</h3>
+          <ul class="list-group list-group-flush" id="hoyTerminados"></ul>
+        </div>
+      </div>
+    </div></div>
+
     <!-- Flujo de caja -->
     <div class="card shadow-sm mb-3"><div class="card-body">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -29,13 +48,13 @@
           <input type="date" class="form-control form-control-sm" id="hasta" title="Hasta">
         </div>
       </div>
-      <div class="row g-3 text-center" id="flujo"></div>
+      <div class="row g-3 text-center" id="flujo"><div class="text-secondary small">Cargando...</div></div>
     </div></div>
 
     <div class="row g-3">
       <div class="col-lg-6">
         <div class="card shadow-sm h-100"><div class="card-body">
-          <h2 class="h6 fw-bold"><i class="bi bi-calendar3 text-taller"></i> Ventas por mes</h2>
+          <h2 class="h6 fw-bold"><i class="bi bi-calendar3 text-taller"></i> Ventas de repuestos por mes</h2>
           <div id="ventasMes"></div>
         </div></div>
       </div>
@@ -47,7 +66,7 @@
       </div>
       <div class="col-12">
         <div class="card shadow-sm"><div class="card-body">
-          <h2 class="h6 fw-bold"><i class="bi bi-person-workspace text-taller"></i> Trabajos por trabajador</h2>
+          <h2 class="h6 fw-bold"><i class="bi bi-person-workspace text-taller"></i> Trabajos por mecánico</h2>
           <div id="porTrabajador"></div>
         </div></div>
       </div>

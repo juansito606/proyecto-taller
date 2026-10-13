@@ -12,10 +12,20 @@
   <div id="menu"></div>
 
   <main class="container py-4">
-    <div class="mb-4">
-      <h1 class="h3 fw-bold mb-0">Hola, <span id="nombre"></span> 👋</h1>
-      <p class="text-secondary mb-0" id="subtitulo"></p>
+    <div class="encabezado-inicio mb-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+          <span class="etiqueta"><i class="bi bi-heart-pulse-fill"></i> Taller de motos</span>
+          <h1 class="display-6 fw-bold mb-1"><span id="saludo">Hola</span>, <span id="nombre"></span> 👋</h1>
+          <p class="mb-0 text-secondary" id="subtitulo"></p>
+        </div>
+        <div class="text-end">
+          <div class="reloj" id="reloj"></div>
+          <div class="small text-secondary text-capitalize" id="hoyTexto"></div>
+        </div>
+      </div>
     </div>
+
     <div id="contenido"></div>
   </main>
 

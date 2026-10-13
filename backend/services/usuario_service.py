@@ -80,3 +80,13 @@ def eliminar(id_usuario):
 
 
     
+
+def listar_mecanicos():
+    """Trabajadores activos (para asignarles trabajos)."""
+    with obtener_conexion() as con, con.cursor() as cur:
+        cur.execute("""SELECT u.id_usuario, u.nombre FROM usuarios u JOIN roles r ON r.id_rol = u.id_rol
+                       WHERE r.nombre = 'TRABAJADOR' AND u.activo = 'S' ORDER BY u.nombre""")
+        return a_diccionarios(cur)
+
+
+    

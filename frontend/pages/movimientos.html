@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Movimientos | El Hospital</title>
+  <title>Ventas | El Hospital</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="../css/estilos.css" rel="stylesheet">
@@ -14,95 +14,163 @@
   <main class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <div>
-        <h1 class="h3 fw-bold mb-0"><i class="bi bi-arrow-left-right text-taller"></i> Ventas y compras</h1>
-        <p class="text-secondary mb-0"><span id="contador">0</span> movimientos</p>
+        <h1 class="h3 fw-bold mb-0"><i class="bi bi-receipt text-taller"></i> Ventas y servicios</h1>
+        <p class="text-secondary mb-0">Repuestos, mano de obra y compras del taller</p>
       </div>
       <div class="d-flex gap-2">
-        <button class="btn btn-success" id="btnVenta"><i class="bi bi-cart-check"></i> Registrar venta</button>
+        <button class="btn btn-taller" id="btnVenta"><i class="bi bi-cart-check"></i> Nueva venta / servicio</button>
         <button class="btn btn-outline-dark" id="btnCompra"><i class="bi bi-truck"></i> Registrar compra</button>
       </div>
     </div>
 
-    <!-- Totales -->
-    <div class="row g-3 mb-3">
-      <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
-        <div class="small text-secondary">Total vendido</div><div class="fs-5 fw-bold text-success" id="totalVentas">$ 0</div>
-      </div></div></div>
-      <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
-        <div class="small text-secondary">Total comprado</div><div class="fs-5 fw-bold" id="totalCompras">$ 0</div>
-      </div></div></div>
-      <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
-        <div class="small text-secondary">Diferencia</div><div class="fs-5 fw-bold" id="diferencia">$ 0</div>
-      </div></div></div>
-    </div>
+    <div class="row g-3 mb-3" id="resumen"></div>
 
-    <!-- Filtros -->
     <div class="card shadow-sm mb-3"><div class="card-body">
       <div class="row g-2">
-        <div class="col-6 col-md-2">
-          <select class="form-select" id="filtroTipo">
-            <option value="">Ventas y compras</option><option>VENTA</option><option>COMPRA</option>
-          </select>
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="search" class="form-control" id="buscar" placeholder="Cliente, placa o apodo">
+          </div>
         </div>
-        <div class="col-6 col-md-4"><select class="form-select" id="filtroRepuesto"></select></div>
         <div class="col-6 col-md-3"><input type="date" class="form-control" id="desde" title="Desde"></div>
         <div class="col-6 col-md-3"><input type="date" class="form-control" id="hasta" title="Hasta"></div>
+        <div class="col-md-2"><button class="btn btn-outline-secondary w-100" id="btnHoy"><i class="bi bi-calendar-day"></i> Hoy</button></div>
       </div>
     </div></div>
 
-    <div class="card shadow-sm"><div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-dark">
-          <tr><th>Fecha</th><th>Tipo</th><th>Repuesto</th><th class="text-center">Cant.</th>
-              <th class="text-end">Precio u.</th><th class="text-end">Total</th><th>Cliente</th><th>Registró</th><th></th></tr>
-        </thead>
-        <tbody id="tabla"></tbody>
-      </table>
-    </div></div>
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabVentas" type="button">
+          Ventas y servicios <span class="badge text-bg-secondary" id="nVentas">0</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabCompras" type="button">
+          Compras a proveedores <span class="badge text-bg-secondary" id="nCompras">0</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tabVentas">
+        <div class="row g-3" id="listaVentas"></div>
+      </div>
+      <div class="tab-pane fade" id="tabCompras">
+        <div class="card shadow-sm"><div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+              <tr><th>Fecha</th><th>Repuesto</th><th class="text-center">Cant.</th><th class="text-end">Precio u.</th>
+                  <th class="text-end">Total</th><th>Registró</th><th></th></tr>
+            </thead>
+            <tbody id="tablaCompras"></tbody>
+          </table>
+        </div></div>
+      </div>
+    </div>
   </main>
 
-  <!-- Formulario -->
-  <div class="modal fade" id="modalMovimiento" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <form class="modal-content" id="formMovimiento" novalidate>
-        <div class="modal-header" id="cabeceraModal">
-          <h2 class="modal-title h5" id="tituloModal">Registrar venta</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <!-- NUEVA VENTA / SERVICIO -->
+  <div class="modal fade" id="modalVenta" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <form class="modal-content" id="formVenta" novalidate>
+        <div class="modal-header bg-dark text-white">
+          <h2 class="modal-title h5"><i class="bi bi-cart-check"></i> Nueva venta / servicio</h2>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body row g-3">
-          <div class="col-12">
-            <label class="form-label">Repuesto *</label>
-            <select class="form-select" id="id_repuesto" required></select>
-            <div class="invalid-feedback">Elija el repuesto.</div>
-            <div class="form-text" id="infoRepuesto"></div>
-          </div>
-          <div class="col-6">
-            <label class="form-label">Cantidad *</label>
-            <input type="number" class="form-control" id="cantidad" required min="1" step="1" value="1">
-            <div class="invalid-feedback" id="errorCantidad">Mínimo 1.</div>
-          </div>
-          <div class="col-6">
-            <label class="form-label" id="etiquetaPrecio">Precio unitario</label>
-            <input type="number" class="form-control" id="precio_unitario" min="1" step="1">
-            <div class="invalid-feedback">Escriba el precio de compra.</div>
-          </div>
-          <div class="col-12 solo-venta">
-            <label class="form-label">Cliente</label>
-            <select class="form-select" id="id_cliente"></select>
-          </div>
-          <div class="col-12 solo-venta">
-            <label class="form-label">¿Se usó en un trabajo del taller?</label>
-            <select class="form-select" id="id_trabajo"></select>
-          </div>
-          <div class="col-12">
-            <div class="alert alert-light border mb-0 d-flex justify-content-between">
-              <span>Total</span><strong id="totalFormulario">$ 0</strong>
+        <div class="modal-body">
+          <h3 class="h6 fw-bold text-taller">1. Cliente y moto</h3>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6"><select class="form-select" id="v_cliente"></select></div>
+            <div class="col-md-6">
+              <select class="form-select" id="v_moto"></select>
+              <div class="invalid-feedback">Para la mano de obra elija la moto.</div>
             </div>
+          </div>
+
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="v_conTrabajo">
+            <label class="form-check-label fw-bold text-taller" for="v_conTrabajo">2. Incluye mano de obra (trabajo de taller)</label>
+          </div>
+          <div class="row g-2 mb-3 d-none" id="cajaTrabajo">
+            <div class="col-12">
+              <textarea class="form-control" id="t_descripcion" rows="2" minlength="5" maxlength="300"
+                        placeholder="¿Qué se le va a hacer a la moto?"></textarea>
+              <div class="invalid-feedback">Describa el trabajo (mínimo 5 caracteres).</div>
+            </div>
+            <div class="col-md-5">
+              <select class="form-select" id="t_mecanico"></select>
+              <div class="invalid-feedback">Elija el mecánico.</div>
+            </div>
+            <div class="col-md-4">
+              <input type="number" class="form-control" id="t_costo" min="0" step="1000" placeholder="Valor mano de obra">
+              <div class="invalid-feedback">Escriba el valor.</div>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" id="t_estado">
+                <option>PENDIENTE</option><option>EN PROCESO</option><option>TERMINADO</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="h6 fw-bold text-taller mb-0">3. Repuestos</h3>
+            <button type="button" class="btn btn-sm btn-outline-dark" id="btnAgregarItem"><i class="bi bi-plus-lg"></i> Agregar repuesto</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-1">
+              <thead><tr><th>Repuesto</th><th style="width:90px">Cant.</th><th style="width:130px">Precio u.</th><th class="text-end">Subtotal</th><th></th></tr></thead>
+              <tbody id="itemsVenta"></tbody>
+            </table>
+          </div>
+          <p class="small text-secondary" id="sinItems">Sin repuestos: puede registrar solo la mano de obra.</p>
+
+          <div class="resumen-venta rounded p-3 mt-2">
+            <div class="d-flex justify-content-between"><span>Repuestos</span><span id="sumRepuestos">$ 0</span></div>
+            <div class="d-flex justify-content-between"><span>Mano de obra</span><span id="sumMano">$ 0</span></div>
+            <hr class="my-2 border-secondary">
+            <div class="d-flex justify-content-between align-items-center"><span>Total</span><strong class="fs-4" id="sumTotal">$ 0</strong></div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-taller" id="btnGuardar"><i class="bi bi-check-lg"></i> Registrar</button>
+          <button type="submit" class="btn btn-taller" id="btnGuardarVenta"><i class="bi bi-check-lg"></i> Registrar venta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- COMPRA A PROVEEDOR -->
+  <div class="modal fade" id="modalCompra" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" id="formCompra" novalidate>
+        <div class="modal-header bg-dark text-white">
+          <h2 class="modal-title h5"><i class="bi bi-truck"></i> Compra a proveedor</h2>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-3">
+          <div class="col-12">
+            <label class="form-label">Repuesto *</label>
+            <select class="form-select" id="c_repuesto" required></select>
+            <div class="invalid-feedback">Elija el repuesto.</div>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Cantidad *</label>
+            <input type="number" class="form-control" id="c_cantidad" required min="1" value="1">
+            <div class="invalid-feedback">Mínimo 1.</div>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Precio de compra *</label>
+            <input type="number" class="form-control" id="c_precio" required min="1">
+            <div class="invalid-feedback">Escriba el precio.</div>
+          </div>
+          <div class="col-12">
+            <div class="alert alert-light border mb-0 d-flex justify-content-between"><span>Total</span><strong id="c_total">$ 0</strong></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-dark"><i class="bi bi-check-lg"></i> Registrar compra</button>
         </div>
       </form>
     </div>
@@ -114,5 +182,4 @@
   <script src="../js/movimientos.js"></script>
 </body>
 </html>
-
 

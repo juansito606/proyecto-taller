@@ -7,6 +7,7 @@ from services import usuario_service as servicio
 from services.auth_service import requiere_rol
 
 SOLO_ADMIN = Depends(requiere_rol("ADMINISTRADOR"))
+ADMIN_O_VENDEDOR = Depends(requiere_rol("ADMINISTRADOR", "VENDEDOR"))
 router = APIRouter(prefix="/api/usuarios", tags=["Usuarios"])
 router_roles = APIRouter(prefix="/api/roles", tags=["Usuarios"])
 
@@ -19,6 +20,11 @@ def listar_roles(usuario=SOLO_ADMIN):
 @router.get("", response_model=List[Usuario])
 def listar(buscar: Optional[str] = None, id_rol: Optional[int] = None, usuario=SOLO_ADMIN):
     return servicio.listar(buscar, id_rol)
+
+
+@router.get("/mecanicos")
+def listar_mecanicos(usuario=ADMIN_O_VENDEDOR):
+    return servicio.listar_mecanicos()
 
 
 @router.get("/{id_usuario}", response_model=Usuario)

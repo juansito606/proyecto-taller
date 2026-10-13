@@ -6,11 +6,10 @@ from fastapi.responses import JSONResponse
 
 from database.conexion import obtener_conexion
 from routers import (auth, categorias, marcas, clientes, motos, repuestos,
-                     trabajos, movimientos, usuarios, reportes)
+                     trabajos, movimientos, ventas, usuarios, reportes, actividad)
 
 app = FastAPI(title="API Taller de Motos")
 
-# CORS: permite que la página web (abierta con Live Server en el puerto 5500) use la API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"],
@@ -18,7 +17,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Módulos de la API
 app.include_router(auth.router)
 app.include_router(usuarios.router)
 app.include_router(usuarios.router_roles)
@@ -28,11 +26,12 @@ app.include_router(clientes.router)
 app.include_router(motos.router)
 app.include_router(repuestos.router)
 app.include_router(trabajos.router)
+app.include_router(ventas.router)
 app.include_router(movimientos.router)
 app.include_router(reportes.router_dashboard)
 app.include_router(reportes.router)
+app.include_router(actividad.router)
 
-# Traduce los errores de Oracle a mensajes claros (no se muestran detalles técnicos)
 ERRORES_ORACLE = {
     1: "Ya existe un registro con ese valor",
     1400: "Falta un dato obligatorio",

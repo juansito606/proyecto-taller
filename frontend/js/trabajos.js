@@ -1,10 +1,8 @@
-// trabajos.js - Trabajos del taller: cambia según el rol
-// Regla: la mano de obra cuenta como ingreso cuando el trabajo pasa a TERMINADO
+// trabajos.js - Admin y vendedora asignan; cada mecánico ve y avanza SOLO sus trabajos
 const usuario = iniciarPagina();
 const esAdmin = usuario.rol === "ADMINISTRADOR";
 const esTrabajador = usuario.rol === "TRABAJADOR";
-const puedeEditar = esAdmin || esTrabajador;          // el vendedor solo mira
-const puedeCobrar = usuario.rol !== "TRABAJADOR";     // admin y vendedor cobran repuestos
+const puedeAsignar = !esTrabajador;   // admin y vendedora eligen el mecánico
 
 const tabla = document.getElementById("tabla");
 const form = document.getElementById("formTrabajo");
@@ -17,36 +15,31 @@ let editandoId = null;
 const COLOR_ESTADO = { "PENDIENTE": "text-bg-warning", "EN PROCESO": "text-bg-info", "TERMINADO": "text-bg-success" };
 const SIGUIENTE = { "PENDIENTE": "EN PROCESO", "EN PROCESO": "TERMINADO" };
 
-if (puedeEditar) campo("btnNuevo").classList.remove("d-none");
-if (esTrabajador) campo("subtitulo").innerHTML = 'Tus trabajos · <span id="contador">0</span>';
+campo("btnNuevo").classList.remove("d-none");
+if (esTrabajador) campo("subtitulo").innerHTML = 'Tus trabajos asignados · <span id="contador">0</span>';
 
-// ---------- Listas para los select ----------
 async function cargarListas() {
   const motos = await api("/motos");
   campo("id_moto").innerHTML = '<option value="">Elija...</option>' + motos.map(m =>
     `<option value="${m.id_moto}">${esc(m.placa)} · ${esc(m.marca)} ${esc(m.modelo)}${m.apodo ? " (" + esc(m.apodo) + ")" : ""} — ${esc(m.cliente)}</option>`).join("");
 
-  if (esAdmin) {
-    const trabajadores = await api("/usuarios?id_rol=3");
-    const activos = trabajadores.filter(t => t.activo === "S");
-    llenarSelect(campo("filtroTrabajador"), trabajadores, "id_usuario", "nombre", "Todos los trabajadores");
-    llenarSelect(campo("id_usuario"), activos, "id_usuario", "nombre", "Elija...");
+  if (puedeAsignar) {
+    const mecanicos = await api("/usuarios/mecanicos");
+    llenarSelect(campo("filtroTrabajador"), mecanicos, "id_usuario", "nombre", "Todos los mecánicos");
+    llenarSelect(campo("id_usuario"), mecanicos, "id_usuario", "nombre", "Elija...");
     campo("cajaFiltroTrabajador").classList.remove("d-none");
     campo("cajaTrabajador").classList.remove("d-none");
     campo("id_usuario").required = true;
   }
 }
 
-// ---------- Listar con filtros ----------
 async function cargar() {
   const filtros = new URLSearchParams();
   if (campo("buscar").value.trim()) filtros.set("buscar", campo("buscar").value.trim());
   if (campo("filtroEstado").value) filtros.set("estado", campo("filtroEstado").value);
-  if (esAdmin && campo("filtroTrabajador").value) filtros.set("id_usuario", campo("filtroTrabajador").value);
+  if (puedeAsignar && campo("filtroTrabajador").value) filtros.set("id_usuario", campo("filtroTrabajador").value);
   if (campo("desde").value) filtros.set("desde", campo("desde").value);
   if (campo("hasta").value) filtros.set("hasta", campo("hasta").value);
-
-  tabla.innerHTML = `<tr><td colspan="8">${cargando()}</td></tr>`;
   try {
     trabajos = await api("/trabajos?" + filtros);
     dibujarTabla();
@@ -58,22 +51,24 @@ async function cargar() {
 function dibujarTabla() {
   campo("contador").textContent = trabajos.length;
 
-  // Totales según los filtros puestos
   const terminados = trabajos.filter(t => t.estado === "TERMINADO");
-  const cobrado = terminados.reduce((s, t) => s + t.costo, 0);
-  const porCobrar = trabajos.filter(t => t.estado !== "TERMINADO").reduce((s, t) => s + t.costo, 0);
+  const activos = trabajos.filter(t => t.estado !== "TERMINADO");
+  const suma = lista => lista.reduce((s, t) => s + t.costo, 0);
   campo("resumen").innerHTML = `
     <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
-      <div class="small text-secondary">Mano de obra cobrada (terminados)</div>
-      <div class="fs-5 fw-bold text-success">${pesos(cobrado)}</div>
+      <div class="small text-secondary">${esTrabajador ? "Ya terminaste" : "Mano de obra terminada"}</div>
+      <div class="fs-5 fw-bold text-success">${pesos(suma(terminados))}</div>
+      <div class="small text-secondary">${terminados.length} trabajos</div>
     </div></div></div>
     <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
-      <div class="small text-secondary">Por cobrar (sin terminar)</div>
-      <div class="fs-5 fw-bold text-warning">${pesos(porCobrar)}</div>
+      <div class="small text-secondary">${esTrabajador ? "Te falta" : "Mano de obra por terminar"}</div>
+      <div class="fs-5 fw-bold text-warning">${pesos(suma(activos))}</div>
+      <div class="small text-secondary">${activos.length} trabajos</div>
     </div></div></div>
     <div class="col-md-4"><div class="card tarjeta-kpi shadow-sm"><div class="card-body">
       <div class="small text-secondary">Avance</div>
-      <div class="fs-5 fw-bold">${terminados.length} terminados de ${trabajos.length}</div>
+      <div class="fs-5 fw-bold">${trabajos.length ? Math.round(terminados.length / trabajos.length * 100) : 0}%</div>
+      <div class="progress barra-dato mt-1"><div class="progress-bar" style="width:${trabajos.length ? terminados.length / trabajos.length * 100 : 0}%"></div></div>
     </div></div></div>`;
 
   if (!trabajos.length) {
@@ -85,14 +80,15 @@ function dibujarTabla() {
       <td class="small text-nowrap">${fecha(t.fecha)}${t.fecha_terminado ? `<br><span class="text-success">✔ ${fecha(t.fecha_terminado)}</span>` : ""}</td>
       <td class="text-nowrap"><strong>${esc(t.placa)}</strong>${t.apodo ? `<br><span class="small text-taller">${esc(t.apodo)}</span>` : ""}</td>
       <td>${esc(t.cliente)}</td>
-      <td class="small">${esc(t.descripcion)}</td>
+      <td class="small">${esc(t.descripcion)}
+        ${t.repuestos ? `<div class="text-secondary"><i class="bi bi-box-seam"></i> ${esc(t.repuestos)} · ${pesos(t.valor_repuestos)}</div>` : ""}
+      </td>
       <td class="small">${esc(t.trabajador)}</td>
-      <td class="text-end">${pesos(t.costo)}</td>
+      <td class="text-end fw-semibold">${pesos(t.costo)}</td>
       <td><span class="badge ${COLOR_ESTADO[t.estado]}">${t.estado}</span></td>
       <td class="text-end text-nowrap">
-        ${puedeEditar && SIGUIENTE[t.estado] ? `<button class="btn btn-sm btn-outline-success" data-avanzar="${t.id_trabajo}" title="Pasar a ${SIGUIENTE[t.estado]}"><i class="bi bi-arrow-right-circle"></i></button>` : ""}
-        ${puedeCobrar ? `<a class="btn btn-sm btn-outline-primary" href="movimientos.html?trabajo=${t.id_trabajo}" title="Cobrar repuestos usados"><i class="bi bi-cart-plus"></i></a>` : ""}
-        ${puedeEditar ? `<button class="btn btn-sm btn-outline-secondary" data-editar="${t.id_trabajo}" title="Editar"><i class="bi bi-pencil"></i></button>` : ""}
+        ${SIGUIENTE[t.estado] ? `<button class="btn btn-sm btn-outline-success" data-avanzar="${t.id_trabajo}" title="Pasar a ${SIGUIENTE[t.estado]}"><i class="bi bi-arrow-right-circle"></i></button>` : ""}
+        <button class="btn btn-sm btn-outline-secondary" data-editar="${t.id_trabajo}" title="Editar"><i class="bi bi-pencil"></i></button>
         ${esAdmin ? `<button class="btn btn-sm btn-outline-danger" data-eliminar="${t.id_trabajo}" title="Eliminar"><i class="bi bi-trash"></i></button>` : ""}
       </td>
     </tr>`).join("");
@@ -102,7 +98,6 @@ let espera;
 campo("buscar").addEventListener("input", () => { clearTimeout(espera); espera = setTimeout(cargar, 300); });
 ["filtroEstado", "filtroTrabajador", "desde", "hasta"].forEach(id => campo(id).addEventListener("change", cargar));
 
-// ---------- Formulario ----------
 function abrirFormulario(trabajo = null) {
   form.reset();
   form.classList.remove("was-validated");
@@ -110,13 +105,12 @@ function abrirFormulario(trabajo = null) {
   campo("tituloModal").textContent = trabajo ? "Editar trabajo" : "Nuevo trabajo";
   if (trabajo) {
     ["id_moto", "descripcion", "costo", "estado"].forEach(c => campo(c).value = trabajo[c]);
-    if (esAdmin) campo("id_usuario").value = trabajo.id_usuario;
+    if (puedeAsignar) campo("id_usuario").value = trabajo.id_usuario;
   } else {
     campo("costo").value = "";
   }
   modal.show();
 }
-
 campo("btnNuevo").addEventListener("click", () => abrirFormulario());
 
 async function guardar(id, datos) {
@@ -133,14 +127,14 @@ form.addEventListener("submit", async (evento) => {
   }
   const datos = {
     id_moto: Number(campo("id_moto").value),
-    id_usuario: esAdmin ? Number(campo("id_usuario").value) : null,   // el trabajador: lo pone la API
+    id_usuario: puedeAsignar ? Number(campo("id_usuario").value) : null,
     descripcion: campo("descripcion").value.trim(),
     costo: Number(campo("costo").value),
     estado: campo("estado").value,
   };
   try {
     await guardar(editandoId, datos);
-    mostrarMensaje("exito", editandoId ? "Trabajo actualizado" : "Trabajo registrado");
+    mostrarMensaje("exito", editandoId ? "Trabajo actualizado" : "Trabajo asignado");
     modal.hide();
     cargar();
   } catch (error) {
@@ -148,13 +142,11 @@ form.addEventListener("submit", async (evento) => {
   }
 });
 
-// ---------- Botones de la tabla ----------
 tabla.addEventListener("click", async (evento) => {
   const boton = evento.target.closest("button");
   if (!boton) return;
   const id = Number(boton.dataset.avanzar || boton.dataset.editar || boton.dataset.eliminar);
   const trabajo = trabajos.find(t => t.id_trabajo === id);
-
   try {
     if (boton.dataset.avanzar) {
       const nuevo = SIGUIENTE[trabajo.estado];
@@ -177,6 +169,8 @@ tabla.addEventListener("click", async (evento) => {
   }
 });
 
+tabla.innerHTML = `<tr><td colspan="8">${cargando()}</td></tr>`;
 cargarListas().then(cargar).catch(error => mostrarMensaje("error", error.message));
+alActualizar(cargar);
 
 

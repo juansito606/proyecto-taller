@@ -1,22 +1,32 @@
-// dashboard.js - Pantalla de inicio: distinta según el rol
+// dashboard.js - Inicio con color, distinto según el rol, con la actividad del taller en vivo
 const usuario = iniciarPagina();
 const contenido = document.getElementById("contenido");
+const campo = id => document.getElementById(id);
 
-document.getElementById("nombre").textContent = usuario.nombre.split(" ")[0];
+const COLOR_ESTADO = { "PENDIENTE": "text-bg-warning", "EN PROCESO": "text-bg-info", "TERMINADO": "text-bg-success" };
+
+// ---------- Saludo y reloj ----------
+campo("nombre").textContent = usuario.nombre.split(" ")[0];
+function reloj() {
+  const ahora = new Date();
+  const h = ahora.getHours();
+  campo("saludo").textContent = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
+  campo("reloj").textContent = ahora.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
+  campo("hoyTexto").textContent = ahora.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+}
+reloj();
+setInterval(reloj, 10000);
 contenido.innerHTML = cargando();
 
-function tarjeta(titulo, valor, icono, alerta = false, detalle = "") {
+// ---------- Piezas ----------
+function tarjeta(titulo, valor, icono, color, detalle = "") {
   return `
     <div class="col-6 col-lg-3">
-      <div class="card tarjeta-kpi shadow-sm h-100 ${alerta ? "alerta" : ""}">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="icono"><i class="bi bi-${icono}"></i></div>
-          <div>
-            <div class="small text-secondary">${titulo}</div>
-            <div class="fs-5 fw-bold">${valor}</div>
-            ${detalle ? `<div class="small text-secondary">${detalle}</div>` : ""}
-          </div>
-        </div>
+      <div class="kpi kpi-${color}">
+        <div class="kpi-titulo">${titulo}</div>
+        <div class="kpi-valor">${valor}</div>
+        ${detalle ? `<div class="kpi-detalle">${detalle}</div>` : ""}
+        <i class="bi bi-${icono} kpi-icono"></i>
       </div>
     </div>`;
 }
@@ -29,115 +39,145 @@ function tablaStockBajo(lista) {
       <tbody>${lista.map(r => `
         <tr>
           <td>${esc(r.nombre)}</td>
-          <td>${esc(r.categoria)}</td>
+          <td class="small text-secondary">${esc(r.categoria)}</td>
           <td class="text-end"><span class="badge text-bg-danger">${r.stock} / mín. ${r.stock_minimo}</span></td>
         </tr>`).join("")}
       </tbody>
     </table></div>`;
 }
 
+function panel(titulo, icono, cuerpo, extra = "") {
+  return `
+    <div class="card h-100"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 fw-bold mb-0"><i class="bi bi-${icono} text-taller"></i> ${titulo}</h2>${extra}
+      </div>
+      ${cuerpo}
+    </div></div>`;
+}
+
 // ---------- ADMINISTRADOR ----------
 async function inicioAdministrador() {
-  document.getElementById("subtitulo").textContent = "Así va El Hospital hoy.";
-  const d = await api("/dashboard");
-
+  campo("subtitulo").textContent = "Así va El Hospital hoy.";
+  const [d, actividad] = await Promise.all([api("/dashboard"), api("/actividad?limite=30")]);
   contenido.innerHTML = `
     <div class="row g-3 mb-3">
-      ${tarjeta("Ingresos de hoy", pesos(d.ingresos_hoy), "cash-coin", false,
+      ${tarjeta("Ingresos de hoy", pesos(d.ingresos_hoy), "cash-coin", "rojo",
                 `Repuestos ${pesos(d.ventas_hoy)} · Mano de obra ${pesos(d.mano_obra_hoy)}`)}
-      ${tarjeta("Ingresos del mes", pesos(d.ingresos_mes), "graph-up-arrow", false,
+      ${tarjeta("Ingresos del mes", pesos(d.ingresos_mes), "graph-up-arrow", "verde",
                 `Repuestos ${pesos(d.ventas_mes)} · Mano de obra ${pesos(d.mano_obra_mes)}`)}
-      ${tarjeta("Mano de obra por cobrar", pesos(d.mano_obra_por_cobrar), "hourglass-split", false,
-                "Trabajos sin terminar")}
-      ${tarjeta("Repuestos con stock bajo", d.repuestos_stock_bajo, "exclamation-triangle", d.repuestos_stock_bajo > 0)}
+      ${tarjeta("Mano de obra por cobrar", pesos(d.mano_obra_por_cobrar), "hourglass-split", "naranja", "Trabajos sin terminar")}
+      ${tarjeta("Valor del inventario", pesos(d.valor_inventario), "box-seam", "azul", `${d.total_clientes} clientes`)}
     </div>
     <div class="row g-3 mb-4">
-      ${tarjeta("Trabajos pendientes", d.trabajos_pendientes, "clock")}
-      ${tarjeta("Trabajos en proceso", d.trabajos_en_proceso, "gear")}
-      ${tarjeta("Trabajos terminados", d.trabajos_terminados, "check2-circle")}
-      ${tarjeta("Valor del inventario", pesos(d.valor_inventario), "box-seam", false, `${d.total_clientes} clientes`)}
+      ${tarjeta("Pendientes", d.trabajos_pendientes, "clock", "negro", "trabajos")}
+      ${tarjeta("En proceso", d.trabajos_en_proceso, "gear-wide-connected", "morado", "trabajos")}
+      ${tarjeta("Terminados", d.trabajos_terminados, "check2-circle", "verde", "trabajos")}
+      ${tarjeta("Stock bajo", d.repuestos_stock_bajo, "exclamation-triangle", d.repuestos_stock_bajo ? "rojo" : "negro", "repuestos por pedir")}
     </div>
     <div class="row g-3">
-      <div class="col-lg-6">
-        <div class="card shadow-sm h-100"><div class="card-body">
-          <h2 class="h6 fw-bold"><i class="bi bi-exclamation-triangle text-taller"></i> Repuestos por pedir</h2>
-          ${tablaStockBajo(d.lista_stock_bajo)}
+      <div class="col-lg-7" id="actividad">
+        <div class="card h-100"><div class="card-body p-0">
+          <div class="d-flex justify-content-between align-items-center px-3 pt-3 pb-2 border-bottom">
+            <h2 class="h6 fw-bold mb-0"><i class="bi bi-activity text-taller"></i> Actividad del taller</h2>
+            <span class="en-vivo">En vivo</span>
+          </div>
+          <div class="lista-actividad">
+            ${actividad.length ? actividad.map(itemActividad).join("")
+              : '<p class="text-secondary p-3 mb-0">Todavía no hay actividad. Cuando alguien registre algo, aparece aquí.</p>'}
+          </div>
         </div></div>
       </div>
-      <div class="col-lg-6">
-        <div class="card shadow-sm h-100"><div class="card-body">
-          <h2 class="h6 fw-bold"><i class="bi bi-clock-history text-taller"></i> Últimos movimientos</h2>
-          <div class="table-responsive"><table class="table table-sm align-middle mb-0">
-            <thead><tr><th>Fecha</th><th>Tipo</th><th>Repuesto</th><th class="text-end">Total</th></tr></thead>
-            <tbody>${d.ultimos_movimientos.map(m => `
-              <tr>
-                <td class="small">${fecha(m.fecha)}</td>
-                <td><span class="badge ${m.tipo === "VENTA" ? "text-bg-success" : "text-bg-secondary"}">${m.tipo}</span></td>
-                <td class="small">${esc(m.repuesto)} × ${m.cantidad}</td>
-                <td class="text-end">${pesos(m.total)}</td>
-              </tr>`).join("")}
-            </tbody>
-          </table></div>
-        </div></div>
+      <div class="col-lg-5">
+        ${panel("Repuestos por pedir", "exclamation-triangle", tablaStockBajo(d.lista_stock_bajo))}
       </div>
     </div>`;
 }
 
-// ---------- VENDEDOR ----------
+// ---------- VENDEDORA ----------
 async function inicioVendedor() {
-  document.getElementById("subtitulo").textContent = "Revisa qué repuestos se están agotando.";
-  const stockBajo = await api("/repuestos?solo_stock_bajo=true");
-  contenido.innerHTML = `
-    <div class="row g-3 mb-4">
-      ${tarjeta("Repuestos con stock bajo", stockBajo.length, "exclamation-triangle", stockBajo.length > 0)}
-    </div>
-    <div class="card shadow-sm"><div class="card-body">
-      <h2 class="h6 fw-bold"><i class="bi bi-exclamation-triangle text-taller"></i> Repuestos por agotarse</h2>
-      ${tablaStockBajo(stockBajo)}
-    </div></div>`;
-}
-
-// ---------- TRABAJADOR ----------
-async function inicioTrabajador() {
-  document.getElementById("subtitulo").textContent = "Estos son tus trabajos.";
-  const trabajos = await api("/trabajos");
-  const contar = estado => trabajos.filter(t => t.estado === estado).length;
+  campo("subtitulo").textContent = "Ventas, inventario y trabajos del día.";
+  const fechaHoy = new Date().toLocaleDateString("en-CA");
+  const [ventasHoy, stockBajo, trabajos] = await Promise.all([
+    api(`/ventas?desde=${fechaHoy}&hasta=${fechaHoy}`),
+    api("/repuestos?solo_stock_bajo=true"),
+    api("/trabajos"),
+  ]);
+  const totalHoy = ventasHoy.reduce((s, v) => s + v.total, 0);
   const activos = trabajos.filter(t => t.estado !== "TERMINADO");
 
-  const mesActual = new Date().toISOString().slice(0, 7);   // "2026-10"
-  const manoObraMes = trabajos
-    .filter(t => t.estado === "TERMINADO" && (t.fecha_terminado || "").startsWith(mesActual))
-    .reduce((suma, t) => suma + t.costo, 0);
+  const listaVentas = ventasHoy.length ? `
+    <ul class="list-group list-group-flush">${ventasHoy.map(v => {
+      const partes = v.items.map(i => `${esc(i.repuesto)} ×${i.cantidad}`);
+      if (v.id_trabajo) partes.unshift(`<i class="bi bi-tools"></i> ${esc(v.trabajo)} (${esc(v.mecanico)})`);
+      return `
+        <li class="list-group-item px-0 d-flex justify-content-between gap-2">
+          <span><span class="small text-secondary">${hora(v.fecha)}</span> · ${esc(v.cliente || "Mostrador")}
+            ${v.placa ? `· <strong>${esc(v.placa)}</strong>` : ""}<br><span class="small">${partes.join(" + ")}</span></span>
+          <strong class="text-nowrap">${pesos(v.total)}</strong>
+        </li>`;
+    }).join("")}</ul>`
+    : '<p class="text-secondary mb-0">Todavía no hay ventas hoy.</p>';
 
   contenido.innerHTML = `
     <div class="row g-3 mb-4">
-      ${tarjeta("Pendientes", contar("PENDIENTE"), "clock")}
-      ${tarjeta("En proceso", contar("EN PROCESO"), "gear")}
-      ${tarjeta("Terminados", contar("TERMINADO"), "check2-circle")}
-      ${tarjeta("Tu mano de obra este mes", pesos(manoObraMes), "cash-coin")}
+      ${tarjeta("Vendido hoy", pesos(totalHoy), "cash-coin", "rojo", `${ventasHoy.length} ventas`)}
+      ${tarjeta("Trabajos activos", activos.length, "tools", "morado", "pendientes y en proceso")}
+      ${tarjeta("Por terminar", pesos(activos.reduce((s, t) => s + t.costo, 0)), "hourglass-split", "naranja", "mano de obra")}
+      ${tarjeta("Stock bajo", stockBajo.length, "exclamation-triangle", stockBajo.length ? "rojo" : "verde", "repuestos por pedir")}
     </div>
-    <div class="card shadow-sm"><div class="card-body">
-      <h2 class="h6 fw-bold"><i class="bi bi-tools text-taller"></i> Trabajos por hacer</h2>
-      ${activos.length ? `
-        <div class="table-responsive"><table class="table table-sm align-middle mb-0">
-          <thead><tr><th>Moto</th><th>Cliente</th><th>Trabajo</th><th class="text-end">Mano de obra</th><th>Estado</th></tr></thead>
-          <tbody>${activos.map(t => `
-            <tr>
-              <td><strong>${esc(t.placa)}</strong> ${t.apodo ? `<span class="text-taller">(${esc(t.apodo)})</span>` : ""}</td>
-              <td>${esc(t.cliente)}</td>
-              <td class="small">${esc(t.descripcion)}</td>
-              <td class="text-end">${pesos(t.costo)}</td>
-              <td><span class="badge ${t.estado === "PENDIENTE" ? "text-bg-warning" : "text-bg-info"}">${t.estado}</span></td>
-            </tr>`).join("")}
-          </tbody>
-        </table></div>` : '<p class="text-success mb-0"><i class="bi bi-check-circle"></i> ¡No tienes trabajos pendientes!</p>'}
-    </div></div>`;
+    <div class="row g-3">
+      <div class="col-lg-7">
+        ${panel("Ventas de hoy", "receipt", listaVentas,
+          `<a href="pages/movimientos.html" class="btn btn-sm btn-taller"><i class="bi bi-cart-plus"></i> Nueva venta</a>`)}
+      </div>
+      <div class="col-lg-5">${panel("Repuestos por agotarse", "exclamation-triangle", tablaStockBajo(stockBajo))}</div>
+    </div>`;
 }
 
+// ---------- MECÁNICO: solo sus trabajos, lo que lleva y lo que le falta ----------
+async function inicioTrabajador() {
+  campo("subtitulo").textContent = "Estos son los trabajos que tienes asignados.";
+  const trabajos = await api("/trabajos");
+  const terminados = trabajos.filter(t => t.estado === "TERMINADO");
+  const activos = trabajos.filter(t => t.estado !== "TERMINADO");
+  const suma = lista => lista.reduce((s, t) => s + t.costo, 0);
+  const ordenados = [...activos, ...terminados];
+
+  const tabla = ordenados.length ? `
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Moto</th><th>Cliente</th><th>Trabajo</th><th class="text-end">Mano de obra</th><th>Estado</th></tr></thead>
+      <tbody>${ordenados.map(t => `
+        <tr class="${t.estado === "TERMINADO" ? "text-secondary" : ""}">
+          <td class="text-nowrap"><strong>${esc(t.placa)}</strong>${t.apodo ? `<br><span class="small text-taller">${esc(t.apodo)}</span>` : ""}</td>
+          <td>${esc(t.cliente)}</td>
+          <td class="small">${esc(t.descripcion)}
+            ${t.repuestos ? `<div class="text-secondary"><i class="bi bi-box-seam"></i> ${esc(t.repuestos)}</div>` : ""}</td>
+          <td class="text-end fw-semibold">${pesos(t.costo)}</td>
+          <td><span class="badge ${COLOR_ESTADO[t.estado]}">${t.estado}</span></td>
+        </tr>`).join("")}
+      </tbody>
+    </table></div>` : '<p class="text-secondary mb-0">Todavía no tienes trabajos asignados.</p>';
+
+  contenido.innerHTML = `
+    <div class="row g-3 mb-4">
+      ${tarjeta("Ya terminaste", pesos(suma(terminados)), "check2-circle", "verde", `${terminados.length} trabajos`)}
+      ${tarjeta("Te falta", pesos(suma(activos)), "hourglass-split", "naranja", `${activos.length} trabajos`)}
+      ${tarjeta("Pendientes", trabajos.filter(t => t.estado === "PENDIENTE").length, "clock", "negro")}
+      ${tarjeta("En proceso", trabajos.filter(t => t.estado === "EN PROCESO").length, "gear-wide-connected", "morado")}
+    </div>
+    ${panel("Tus trabajos", "tools", tabla,
+      `<a href="pages/trabajos.html" class="btn btn-sm btn-taller"><i class="bi bi-plus-lg"></i> Nueva orden</a>`)}`;
+}
+
+// ---------- Arrancar y mantener actualizado ----------
 const inicios = { ADMINISTRADOR: inicioAdministrador, VENDEDOR: inicioVendedor, TRABAJADOR: inicioTrabajador };
-inicios[usuario.rol]().catch(error => {
-  contenido.innerHTML = `<div class="alert alert-danger">${esc(error.message)}</div>`;
-  mostrarMensaje("error", error.message);
-});
+function mostrarInicio() {
+  inicios[usuario.rol]()
+    .then(() => setTimeout(() => contenido.classList.add("sin-animacion"), 800))   // animar solo la primera vez
+    .catch(error => mostrarMensaje("error", error.message));
+}
+mostrarInicio();
+alActualizar(mostrarInicio);
 
 

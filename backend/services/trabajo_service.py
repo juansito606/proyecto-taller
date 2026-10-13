@@ -2,9 +2,15 @@
 from database.conexion import obtener_conexion, a_diccionarios
 
 SELECT_TRABAJOS = """
-    SELECT t.id_trabajo, t.id_moto, m.placa, m.apodo, c.nombre AS cliente,
-           t.id_usuario, u.nombre AS trabajador, t.descripcion, t.fecha, t.costo, t.estado,
-           t.fecha_terminado
+    SELECT t.id_trabajo, t.id_moto, m.placa, m.apodo, m.marca AS marca_moto, m.modelo AS modelo_moto,
+           c.nombre AS cliente, t.id_usuario, u.nombre AS trabajador, t.descripcion, t.fecha, t.costo,
+           t.estado, t.fecha_terminado,
+           (SELECT LISTAGG(r.nombre || ' x' || mv.cantidad, ', ') WITHIN GROUP (ORDER BY mv.id_movimiento)
+              FROM movimientos mv JOIN repuestos r ON r.id_repuesto = mv.id_repuesto
+             WHERE mv.id_trabajo = t.id_trabajo AND mv.tipo = 'VENTA') AS repuestos,
+           (SELECT NVL(SUM(mv.cantidad * mv.precio_unitario), 0)
+              FROM movimientos mv
+             WHERE mv.id_trabajo = t.id_trabajo AND mv.tipo = 'VENTA') AS valor_repuestos
     FROM trabajos t
     JOIN motos_cliente m ON m.id_moto    = t.id_moto
     JOIN clientes c      ON c.id_cliente = m.id_cliente

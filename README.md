@@ -126,16 +126,16 @@ cd proyecto-taller
 
 ### Paso 2 — Prender Oracle en Docker
 ```bash
-docker run -d --name oracle-taller -p 1522:1521 -e ORACLE_PWD=ClaveAdmin123 container-registry.oracle.com/database/free:latest
+docker run -d --name oracle-taller -p 1522:1521 -e ORACLE_PWD=TU_CLAVE_ADMIN container-registry.oracle.com/database/free:latest
 ```
 Espera unos minutos hasta que `docker logs oracle-taller` diga **DATABASE IS READY TO USE**.
 
 Luego crea el usuario del taller:
 ```bash
-docker exec -it oracle-taller sqlplus sys/ClaveAdmin123@FREEPDB1 as sysdba
+docker exec -it oracle-taller sqlplus sys/TU_CLAVE_ADMIN@FREEPDB1 as sysdba
 ```
 ```sql
-CREATE USER taller IDENTIFIED BY Taller2026;
+CREATE USER taller IDENTIFIED BY TU_CLAVE;
 GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO taller;
 exit
 ```
@@ -143,11 +143,11 @@ exit
 ### Paso 3 — Crear las tablas y cargar los datos (en orden)
 ```bash
 docker cp database\. oracle-taller:/tmp/
-docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/01_tables.sql
-docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/02_constraints.sql
-docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/03_data.sql
-docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/06_actividad.sql
-docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/07_tipos_trabajo.sql
+docker exec -it oracle-taller sqlplus taller/TU_CLAVE@FREEPDB1 @/tmp/01_tables.sql
+docker exec -it oracle-taller sqlplus taller/TU_CLAVE@FREEPDB1 @/tmp/02_constraints.sql
+docker exec -it oracle-taller sqlplus taller/TU_CLAVE@FREEPDB1 @/tmp/03_data.sql
+docker exec -it oracle-taller sqlplus taller/TU_CLAVE@FREEPDB1 @/tmp/06_actividad.sql
+docker exec -it oracle-taller sqlplus taller/TU_CLAVE@FREEPDB1 @/tmp/07_tipos_trabajo.sql
 ```
 (Después de cada script escribe `exit` para salir de sqlplus. El `05_actualizacion_ventas.sql` solo sirve para actualizar bases creadas con la versión anterior; en una instalación nueva no se usa.)
 
@@ -155,7 +155,7 @@ docker exec -it oracle-taller sqlplus taller/Taller2026@FREEPDB1 @/tmp/07_tipos_
 Copia `backend/.env.example` como `backend/.env` y escribe la contraseña real:
 ```
 DB_USER=taller
-DB_PASSWORD=Taller2026
+DB_PASSWORD=TU_CLAVE
 DB_DSN=localhost:1522/FREEPDB1
 ```
 
